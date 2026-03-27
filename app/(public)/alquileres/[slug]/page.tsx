@@ -51,19 +51,21 @@ export default async function PropertyDetailPage({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-12 md:py-16">
       <Link
         href="/alquileres"
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+        className="mb-6 inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ChevronLeft className="h-4 w-4 mr-1" />
+        <ChevronLeft className="mr-1 h-4 w-4" />
         Volver a alquileres
       </Link>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid gap-10 lg:grid-cols-3">
+        <div className="space-y-10 lg:col-span-2">
           <div>
-            <h1 className="text-3xl font-bold mb-2">{propertyData.name}</h1>
+            <h1 className="font-display text-4xl font-semibold tracking-tight md:text-5xl">
+              {propertyData.name}
+            </h1>
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-4 w-4" />
               <span>{propertyData.location}</span>
@@ -128,7 +130,9 @@ export default async function PropertyDetailPage({
           </Tabs>
 
           <div>
-            <h2 className="text-xl font-semibold mb-4">Disponibilidad</h2>
+            <h2 className="mb-4 font-display text-2xl font-semibold tracking-tight">
+              Disponibilidad
+            </h2>
             <AvailabilityCalendar
               propertyId={propertyData.id}
               blockedDates={propertyData.blockedDates}
@@ -148,10 +152,10 @@ export default async function PropertyDetailPage({
 
         <div className="lg:col-span-1">
           <div className="sticky top-24">
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
+            <Card className="rounded-2xl border-0 shadow-sm ring-1 ring-border/60">
+              <CardContent className="p-6 md:p-7">
                 <div className="mb-4">
-                  <span className="text-2xl font-bold">
+                  <span className="font-display text-3xl font-semibold tabular-nums">
                     {formatCLP(propertyData.pricePerNight)}
                   </span>
                   <span className="text-muted-foreground"> / noche</span>
@@ -161,10 +165,10 @@ export default async function PropertyDetailPage({
               </CardContent>
             </Card>
 
-            <div className="mt-4 p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-800">
-                <strong>Reservá directo:</strong> Ahorrás hasta un 15% en
-                comisiones de plataformas.
+            <div className="mt-4 rounded-xl border border-primary/15 bg-primary/[0.06] p-4">
+              <p className="text-sm leading-relaxed text-foreground/90">
+                <strong>Reservá directo:</strong> mejor precio al evitar
+                comisiones de intermediarios.
               </p>
             </div>
           </div>

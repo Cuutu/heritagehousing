@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Manrope, Outfit } from "next/font/google";
 import { AppProviders } from "@/components/providers/AppProviders";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Heritage Housing | Alquileres y Remodelaciones en Chile",
@@ -23,8 +33,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" className={`${manrope.variable} ${outfit.variable}`}>
+      <body className={`${manrope.className} min-h-screen bg-background antialiased`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

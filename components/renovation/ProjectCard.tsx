@@ -1,7 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 
@@ -20,10 +17,10 @@ interface ProjectCardProps {
 const categoryLabels: Record<string, string> = {
   cocina: "Cocina",
   baño: "Baño",
-  vivienda_completa: "Vivienda Completa",
-  exterior: "Espacios Exteriores",
+  vivienda_completa: "Vivienda completa",
+  exterior: "Exterior",
   oficina: "Oficina",
-  comercial: "Espacio Comercial",
+  comercial: "Comercial",
   otro: "Otro",
 };
 
@@ -32,37 +29,44 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const mainAfter = project.afterImages[0];
 
   return (
-    <Card className="overflow-hidden group">
-      <div className="relative aspect-[4/3]">
+    <article className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-border/60 transition-shadow duration-300 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)]">
+      <div className="relative aspect-[16/10] overflow-hidden">
         {mainBefore && mainAfter ? (
           <BeforeAfterSlider
             beforeImage={mainBefore}
             afterImage={mainAfter}
           />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-muted-foreground">Sin imágenes</span>
+          <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+            Sin imágenes
           </div>
         )}
       </div>
 
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Badge variant="secondary">
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
             {categoryLabels[project.category] || project.category}
-          </Badge>
+          </span>
           {project.area && (
-            <Badge variant="outline">{project.area} m²</Badge>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {project.area} m²
+            </span>
           )}
         </div>
-        <h3 className="font-semibold text-lg line-clamp-1">{project.title}</h3>
-      </CardContent>
+        <h3 className="mt-3 font-display text-lg font-semibold leading-snug tracking-tight line-clamp-2">
+          <Link
+            href={`/remodelaciones/${project.slug}`}
+            className="transition-colors hover:text-primary"
+          >
+            {project.title}
+          </Link>
+        </h3>
 
-      <CardFooter className="p-4 pt-0">
-        <Button asChild variant="outline" className="w-full">
-          <Link href={`/remodelaciones/${project.slug}`}>Ver Proyecto</Link>
+        <Button asChild variant="outline" className="mt-5 w-full rounded-full border-border/80">
+          <Link href={`/remodelaciones/${project.slug}`}>Ver proyecto</Link>
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </article>
   );
 }

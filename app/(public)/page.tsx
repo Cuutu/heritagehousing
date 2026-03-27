@@ -2,44 +2,27 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Home,
-  Hammer,
-  Shield,
-  Star,
-  Users,
-  Calendar,
-  CheckCircle,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, Shield, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { ProjectCard } from "@/components/renovation/ProjectCard";
 import { prisma } from "@/lib/prisma";
 
-const trustLogos = [
-  { name: "Airbnb", icon: Home, color: "text-pink-500" },
-  { name: "Booking.com", icon: Calendar, color: "text-blue-600" },
-  { name: "Google Reviews", icon: Star, color: "text-yellow-500" },
-];
-
-const valueProps = [
+const pillars = [
   {
     icon: Shield,
-    title: "Reserva Segura",
-    description: "Pago seguro a través de Stripe. Tu dinero está protegido.",
+    title: "Reserva segura",
+    text: "Pagos con estándares actuales. Tu información protegida.",
   },
   {
-    icon: Users,
-    title: "Atención Personalizada",
-    description: "Te acompañamos antes, durante y después de tu estadía.",
+    icon: Sparkles,
+    title: "Curaduría real",
+    text: "Cada espacio cumple un estándar claro de calidad y mantenimiento.",
   },
   {
-    icon: CheckCircle,
-    title: "Propiedades Verificadas",
-    description: "Todas nuestras propiedades están verificadas y mantenidas.",
+    icon: Star,
+    title: "Atención directa",
+    text: "Hablás con quien gestiona la propiedad o el proyecto.",
   },
 ];
 
@@ -78,59 +61,97 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col">
-      <section className="relative bg-gradient-to-br from-primary/10 via-background to-secondary/20">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
-            <div className="flex flex-col justify-center space-y-6">
-              <div className="space-y-4">
-                <Badge variant="secondary" className="w-fit">
-                  Alquileres y Remodelaciones en Chile
-                </Badge>
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                  Tu próximo hogar te está esperando
-                </h1>
-                <p className="text-xl text-muted-foreground max-w-[500px]">
-                  Encuentra alojamientos únicos para tus vacaciones o transforma
-                  tu espacio con nuestros servicios de remodelación profesional.
-                </p>
-              </div>
+      <section className="relative overflow-hidden border-b border-border/40">
+        <div className="pointer-events-none absolute inset-0 grain opacity-50" />
+        <div className="pointer-events-none absolute -right-24 top-0 h-[520px] w-[520px] rounded-full bg-primary/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-amber-900/[0.04] blur-3xl" />
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="text-base">
+        <div className="container relative mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-28">
+          <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
+            <div className="lg:col-span-6">
+              <p
+                className="animate-fade-up font-display text-xs font-semibold uppercase tracking-[0.28em] text-primary opacity-0"
+                style={{ animationDelay: "0ms" }}
+              >
+                Alquileres · Remodelaciones · Chile
+              </p>
+              <h1
+                className="animate-fade-up mt-5 font-display text-[clamp(2.25rem,5vw,3.75rem)] font-semibold leading-[1.08] tracking-tight text-foreground opacity-0"
+                style={{ animationDelay: "80ms" }}
+              >
+                Espacios pensados para quedarse. O para transformarse.
+              </h1>
+              <p
+                className="animate-fade-up mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground opacity-0"
+                style={{ animationDelay: "160ms" }}
+              >
+                Elegí tu próxima estadía o encargá una remodelación con un equipo
+                que entiende diseño, materiales y plazos.
+              </p>
+              <div
+                className="animate-fade-up mt-10 flex flex-col gap-3 sm:flex-row sm:items-center opacity-0"
+                style={{ animationDelay: "240ms" }}
+              >
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-full px-8 text-base font-medium"
+                >
                   <Link href="/alquileres">
-                    <Home className="mr-2 h-5 w-5" />
-                    Explorar Propiedades
+                    Ver alojamientos
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="text-base">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="lg"
+                  className="h-12 rounded-full px-6 text-base text-muted-foreground hover:text-foreground"
+                >
                   <Link href="/remodelaciones">
-                    <Hammer className="mr-2 h-5 w-5" />
-                    Ver Remodelaciones
+                    Remodelaciones
+                    <ArrowUpRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
             </div>
 
-            <div className="relative hidden lg:block">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
+            <div className="relative lg:col-span-6">
+              <div className="grid grid-cols-12 gap-3 md:gap-4">
+                <div className="col-span-7 animate-fade-in opacity-0 [animation-delay:320ms] [animation-fill-mode:forwards]">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border/50">
                     <Image
-                      src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600"
-                      alt="Propiedad en alquiler"
+                      src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80"
+                      alt="Interior de alojamiento"
                       fill
                       className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 45vw"
+                      priority
                     />
                   </div>
                 </div>
-                <div className="space-y-4 pt-8">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
-                    <Image
-                      src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600"
-                      alt="Proyecto de remodelación"
-                      fill
-                      className="object-cover"
-                    />
+                <div className="col-span-5 flex flex-col justify-end gap-3 md:gap-4">
+                  <div className="animate-fade-in opacity-0 [animation-delay:420ms] [animation-fill-mode:forwards]">
+                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border/50">
+                      <Image
+                        src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80"
+                        alt="Detalle de cocina"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 40vw, 22vw"
+                      />
+                    </div>
+                  </div>
+                  <div className="hidden animate-fade-in opacity-0 [animation-delay:500ms] [animation-fill-mode:forwards] sm:block">
+                    <div className="relative aspect-[5/4] overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border/50">
+                      <Image
+                        src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80"
+                        alt="Arquitectura"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 40vw, 22vw"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -139,95 +160,101 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y bg-muted/30">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            {trustLogos.map((logo) => (
-              <div
-                key={logo.name}
-                className="flex items-center gap-2 text-muted-foreground"
-              >
-                <logo.icon className={`h-6 w-6 ${logo.color}`} />
-                <span className="text-sm font-medium">{logo.name}</span>
-              </div>
-            ))}
-            <div className="flex items-center gap-1">
+      <section className="border-b border-border/40 bg-muted/20 py-8">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
+              Reservas directas sin comisiones de intermediarios. Mejor relación
+              calidad-precio cuando coordinás con nosotros.
+            </p>
+            <div className="flex items-center gap-1 shrink-0 text-amber-800/90">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className="h-5 w-5 fill-yellow-400 text-yellow-400"
+                  className="h-4 w-4 fill-current"
+                  aria-hidden
                 />
               ))}
-              <span className="text-sm font-medium ml-2">4.9/5 (120+ reseñas)</span>
+              <span className="ml-2 text-xs font-medium text-muted-foreground">
+                4.9 · experiencias verificadas
+              </span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Propiedades Destacadas
+      <section className="py-20 md:py-28">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+                Alojamientos
               </h2>
-              <p className="text-muted-foreground mt-2">
-                Las mejores opciones para tu próxima estadía
+              <p className="mt-3 text-lg text-muted-foreground">
+                Selección reducida, bien mantenida.
               </p>
             </div>
-            <Button asChild variant="outline">
+            <Button
+              asChild
+              variant="outline"
+              className="w-fit rounded-full border-border/80"
+            >
               <Link href="/alquileres">
-                Ver Todas
+                Ver todas
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {formattedProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
           </div>
 
-          <div className="mt-12 bg-primary/5 rounded-2xl p-6 md:p-8">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold mb-2">
-                  Reservá directo y ahorrá
+          <div className="mt-16 rounded-2xl border border-border/60 bg-card px-6 py-10 md:px-10 md:py-12">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="font-display text-xl font-semibold md:text-2xl">
+                  Reservá en directo
                 </h3>
-                <p className="text-muted-foreground">
-                  Al reservar directamente con nosotros, evitás las comisiones de
-                  plataformas como Airbnb o Booking.com. ¡Mejor precio garantizado!
+                <p className="mt-2 max-w-md text-muted-foreground">
+                  Evitá comisiones de plataformas. Consultá disponibilidad y
+                  cerrá con transparencia.
                 </p>
               </div>
-              <Button asChild size="lg">
-                <Link href="/alquileres">Buscar Propiedades</Link>
+              <Button asChild size="lg" className="h-12 shrink-0 rounded-full px-8">
+                <Link href="/alquileres">Buscar fechas</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+      <section className="border-t border-border/40 bg-muted/15 py-20 md:py-28">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Nuestros Trabajos
+              <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+                Obra reciente
               </h2>
-              <p className="text-muted-foreground mt-2">
-                Transformamos espacios con calidad y profesionalismo
+              <p className="mt-3 max-w-lg text-lg text-muted-foreground">
+                Antes y después, con foco en durabilidad y estética.
               </p>
             </div>
-            <Button asChild variant="outline">
+            <Button
+              asChild
+              variant="outline"
+              className="w-fit rounded-full border-border/80"
+            >
               <Link href="/remodelaciones">
-                Ver Portfolio
+                Ver portfolio
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="mt-14 grid gap-8 md:grid-cols-2">
             {formattedProjects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
@@ -235,60 +262,59 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight">
-              ¿Por qué elegirnos?
+      <section className="py-20 md:py-28">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+              Por qué Heritage
             </h2>
-            <p className="text-muted-foreground mt-2">
-              Tu satisfacción es nuestra prioridad
+            <p className="mt-3 text-muted-foreground">
+              Tres principios que guían cada proyecto y cada estadía.
             </p>
           </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {valueProps.map((prop) => (
-              <Card key={prop.title} className="text-center">
-                <CardContent className="pt-6">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <prop.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{prop.title}</h3>
-                  <p className="text-muted-foreground text-sm">
-                    {prop.description}
-                  </p>
-                </CardContent>
-              </Card>
+          <div className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
+            {pillars.map((item) => (
+              <div key={item.title} className="text-center md:text-left">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary md:mx-0">
+                  <item.icon className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+                <h3 className="mt-5 font-display text-lg font-semibold">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {item.text}
+                </p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold tracking-tight mb-4">
-            ¿Listo para tu próxima aventura?
+      <section className="border-t border-border/40 bg-foreground py-20 text-background md:py-24">
+        <div className="container mx-auto px-4 text-center md:px-6">
+          <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+            ¿Seguimos?
           </h2>
-          <p className="text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Ya sea que busques el lugar perfecto para tu vacaciones o quieras
-            remodelar tu hogar, estamos aquí para ayudarte.
+          <p className="mx-auto mt-4 max-w-lg text-background/75">
+            Elegí una fecha o contanos tu remodelación. Respondemos con claridad
+            y sin vueltas.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
+              asChild
               size="lg"
               variant="secondary"
-              asChild
-              className="text-base"
+              className="h-12 rounded-full px-8 text-base"
             >
-              <Link href="/alquileres">Buscar Alojamiento</Link>
+              <Link href="/alquileres">Alojamientos</Link>
             </Button>
             <Button
+              asChild
               size="lg"
               variant="outline"
-              asChild
-              className="text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+              className="h-12 rounded-full border-background/30 bg-transparent px-8 text-base text-background hover:bg-background/10 hover:text-background"
             >
-              <Link href="/remodelaciones#contacto">Solicitar Cotización</Link>
+              <Link href="/remodelaciones#contacto">Cotizar obra</Link>
             </Button>
           </div>
         </div>

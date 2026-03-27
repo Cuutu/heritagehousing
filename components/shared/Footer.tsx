@@ -1,118 +1,111 @@
 import Link from "next/link";
-import { Home, Mail, Phone, MapPin, Instagram, Facebook } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 const footerLinks = {
   rentals: [
-    { name: "Ver Propiedades", href: "/alquileres" },
-    { name: "Cómo Reservar", href: "/ayuda" },
-    { name: "Preguntas Frecuentes", href: "/faq" },
+    { name: "Propiedades", href: "/alquileres" },
+    { name: "Cómo reservar", href: "/alquileres" },
   ],
   renovations: [
     { name: "Portfolio", href: "/remodelaciones" },
-    { name: "Solicitar Cotización", href: "/remodelaciones#contacto" },
-    { name: "Proceso de Trabajo", href: "/proceso" },
+    { name: "Cotización", href: "/remodelaciones#contacto" },
   ],
   company: [
-    { name: "Sobre Nosotros", href: "/nosotros" },
-    { name: "Términos y Condiciones", href: "/terminos" },
-    { name: "Política de Privacidad", href: "/privacidad" },
+    { name: "Términos", href: "/terminos" },
+    { name: "Privacidad", href: "/privacidad" },
   ],
 };
 
 export function Footer() {
   return (
-    <footer className="border-t bg-muted/50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <Home className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">Heritage Housing</span>
+    <footer className="border-t border-border/80 bg-muted/30">
+      <div className="container mx-auto px-4 py-16 md:px-6">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
+          <div className="lg:col-span-5">
+            <Link
+              href="/"
+              className="font-display text-xl font-semibold tracking-tight text-foreground"
+            >
+              Heritage Housing
             </Link>
-            <p className="text-sm text-muted-foreground mb-4">
-              Tu socio de confianza para arriendos vacacionales y remodelaciones
-              en Chile. Calidad, confianza y atención personalizada.
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Alojamientos seleccionados y remodelaciones con criterio de diseño.
+              Chile.
             </p>
-            <div className="flex gap-4">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7 lg:justify-end">
+            <div>
+              <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Alquileres
+              </p>
+              <ul className="mt-4 space-y-3">
+                {footerLinks.rentals.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-foreground/80 transition-colors hover:text-foreground"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Alquileres</h3>
-            <ul className="space-y-2">
-              {footerLinks.rentals.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.name}
-                  </Link>
+            <div>
+              <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Remodelaciones
+              </p>
+              <ul className="mt-4 space-y-3">
+                {footerLinks.renovations.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-foreground/80 transition-colors hover:text-foreground"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Contacto
+              </p>
+              <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                  Santiago, Chile
                 </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Remodelaciones</h3>
-            <ul className="space-y-2">
-              {footerLinks.renovations.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                <li className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <a
+                    href="mailto:contacto@heritagehousing.cl"
+                    className="transition-colors hover:text-foreground"
                   >
-                    {link.name}
-                  </Link>
+                    contacto@heritagehousing.cl
+                  </a>
                 </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Contacto</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                Santiago, Chile
-              </li>
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <a href="tel:+56912345678" className="hover:text-foreground">
-                  +56 9 1234 5678
-                </a>
-              </li>
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <a
-                  href="mailto:contacto@heritagehousing.cl"
-                  className="hover:text-foreground"
-                >
-                  contacto@heritagehousing.cl
-                </a>
-              </li>
-            </ul>
+              </ul>
+              <ul className="mt-6 space-y-2 border-t border-border/60 pt-6">
+                {footerLinks.company.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t">
-          <p className="text-center text-sm text-muted-foreground">
+        <div className="mt-14 border-t border-border/60 pt-8">
+          <p className="text-center text-xs text-muted-foreground">
             © {new Date().getFullYear()} Heritage Housing. Todos los derechos
             reservados.
           </p>
