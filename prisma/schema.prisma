@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Property {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  name           String
+  description    String
+  location       String
+  pricePerNight  Decimal      @db.Decimal(10, 2)
+  maxGuests      Int
+  bedrooms       Int
+  bathrooms      Int
+  images         String[]
+  amenities      String[]
+  airbnbIcalUrl  String?
+  bookingIcalUrl String?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  reservations   Reservation[]
+  blockedDates   BlockedDate[]
+
+  @@index([isActive])
+  @@index([slug])
+}
+
+model Reservation {
+  id            String        @id @default(cuid())
+  propertyId    String
+  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  source        String
+  checkIn       DateTime      @db.Date
+  checkOut      DateTime      @db.Date
+  guestName     String
+  guestEmail    String
+  guestPhone    String?
+  totalPrice    Decimal       @db.Decimal(10, 2)
+  paymentStatus String        @default("PENDING")
+  stripeId      String?
+  externalId    String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([propertyId])
+  @@index([checkIn, checkOut])
+  @@index([paymentStatus])
+  @@index([source])
+}
+
+model BlockedDate {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  date       DateTime @db.Date
+  source     String
+  createdAt  DateTime @default(now())
+
+  @@unique([propertyId, date])
+  @@index([propertyId])
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  description  String
+  category     String
+  area         Int?
+  duration     Int?
+  beforeImages String[]
+  afterImages  String[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([category])
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  projectType String
+  message     String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
