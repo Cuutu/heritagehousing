@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const propertySchema = z.object({
+const propertySchemaBase = z.object({
   name: z
     .string()
     .min(3, "Nombre debe tener al menos 3 caracteres")
@@ -10,8 +10,13 @@ export const propertySchema = z.object({
     .min(3)
     .max(100)
     .regex(/^[a-z0-9-]+$/, "Solo letras minúsculas, números y guiones"),
-  description: z.string().min(50, "Descripción debe tener al menos 50 caracteres"),
+  description: z
+    .string()
+    .min(50, "Descripción debe tener al menos 50 caracteres"),
   location: z.string().min(3, "Ubicación requerida"),
+  mapAddress: z.string().max(500).optional().or(z.literal("")),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
   pricePerNight: z.coerce.number().positive("Precio debe ser positivo"),
   maxGuests: z.coerce.number().int().min(1).max(20),
   bedrooms: z.coerce.number().int().min(0),
@@ -23,7 +28,28 @@ export const propertySchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-export type PropertyInput = z.infer<typeof propertySchema>;
+function latLngPairRefine(d: {
+  latitude?: number | null;
+  longitude?: number | null;
+}) {
+  const hasLat = d.latitude != null;
+  const hasLng = d.longitude != null;
+  return hasLat === hasLng;
+}
+
+export const propertySchema = propertySchemaBase.refine(latLngPairRefine, {
+  message: "Latitud y longitud deben completarse juntas",
+  path: ["latitude"],
+});
+
+export const propertyUpdateSchema = propertySchemaBase
+  .partial()
+  .refine(latLngPairRefine, {
+    message: "Latitud y longitud deben completarse juntas",
+    path: ["latitude"],
+  });
+
+export type PropertyInput = z.infer<typeof propertySchemaBase>;
 
 export const propertyFilterSchema = z.object({
   checkIn: z.coerce.date().optional(),

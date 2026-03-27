@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { propertySchema, type PropertyInput } from "@/lib/validations/property.schema";
+import {
+  propertySchema,
+  propertyUpdateSchema,
+  type PropertyInput,
+} from "@/lib/validations/property.schema";
 import {
   createProperty as repoCreate,
   updateProperty as repoUpdate,
@@ -34,7 +38,7 @@ export async function createPropertyAction(raw: unknown) {
 export async function updatePropertyAction(id: string, raw: unknown) {
   try {
     idSchema.parse(id);
-    const data = propertySchema.partial().parse(raw);
+    const data = propertyUpdateSchema.parse(raw);
     await repoUpdate(id, data as Partial<PropertyInput>);
     revalidatePath("/admin/propiedades");
     revalidatePath("/alquileres");

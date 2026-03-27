@@ -72,6 +72,9 @@ const emptyForm = {
   slug: "",
   description: "",
   location: "",
+  mapAddress: "",
+  latitude: "",
+  longitude: "",
   pricePerNight: "",
   maxGuests: "4",
   bedrooms: "1",
@@ -119,11 +122,18 @@ export function PropertiesAdminClient({
   const submitCreate = async () => {
     setLoading(true);
     setError(null);
+    const lat =
+      form.latitude.trim() === "" ? null : Number(form.latitude);
+    const lng =
+      form.longitude.trim() === "" ? null : Number(form.longitude);
     const payload = {
       name: form.name,
       slug: form.slug,
       description: form.description,
       location: form.location,
+      mapAddress: form.mapAddress.trim() || undefined,
+      latitude: lat !== null && Number.isFinite(lat) ? lat : null,
+      longitude: lng !== null && Number.isFinite(lng) ? lng : null,
       pricePerNight: Number(form.pricePerNight),
       maxGuests: Number(form.maxGuests),
       bedrooms: Number(form.bedrooms),
@@ -152,6 +162,9 @@ export function PropertiesAdminClient({
       slug: p.slug,
       description: p.description,
       location: p.location,
+      mapAddress: p.mapAddress ?? "",
+      latitude: p.latitude != null ? String(p.latitude) : "",
+      longitude: p.longitude != null ? String(p.longitude) : "",
       pricePerNight: String(p.pricePerNight),
       maxGuests: String(p.maxGuests),
       bedrooms: String(p.bedrooms),
@@ -167,11 +180,18 @@ export function PropertiesAdminClient({
     if (!editId) return;
     setLoading(true);
     setError(null);
+    const lat =
+      form.latitude.trim() === "" ? null : Number(form.latitude);
+    const lng =
+      form.longitude.trim() === "" ? null : Number(form.longitude);
     const payload = {
       name: form.name,
       slug: form.slug,
       description: form.description,
       location: form.location,
+      mapAddress: form.mapAddress.trim() || undefined,
+      latitude: lat !== null && Number.isFinite(lat) ? lat : null,
+      longitude: lng !== null && Number.isFinite(lng) ? lng : null,
       pricePerNight: Number(form.pricePerNight),
       maxGuests: Number(form.maxGuests),
       bedrooms: Number(form.bedrooms),
@@ -238,7 +258,7 @@ export function PropertiesAdminClient({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label>Ubicación</Label>
+          <Label>Ubicación (zona)</Label>
           <Input
             value={form.location}
             onChange={(e) =>
@@ -257,6 +277,45 @@ export function PropertiesAdminClient({
           />
         </div>
       </div>
+      <div className="grid gap-2">
+        <Label>Dirección para mapa (opcional)</Label>
+        <Input
+          placeholder="Ej. Av. Libertad 123"
+          value={form.mapAddress}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, mapAddress: e.target.value }))
+          }
+        />
+        <p className="text-xs text-muted-foreground">
+          Se muestra en el mapa de /alquileres junto al pin.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label>Latitud (opcional)</Label>
+          <Input
+            placeholder="-33.4372"
+            value={form.latitude}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, latitude: e.target.value }))
+            }
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label>Longitud (opcional)</Label>
+          <Input
+            placeholder="-70.6506"
+            value={form.longitude}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, longitude: e.target.value }))
+            }
+          />
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground -mt-2">
+        Copiá lat/lng desde Google Maps (clic derecho en el mapa). Ambas o
+        ninguna.
+      </p>
       <div className="grid grid-cols-3 gap-4">
         <div className="grid gap-2">
           <Label>Huéspedes</Label>

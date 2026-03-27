@@ -111,6 +111,9 @@ export async function createProperty(data: PropertyInput) {
       slug: data.slug,
       description: data.description,
       location: data.location,
+      mapAddress: data.mapAddress?.trim() || null,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
       pricePerNight: data.pricePerNight,
       maxGuests: data.maxGuests,
       bedrooms: data.bedrooms,
@@ -129,6 +132,13 @@ export async function updateProperty(id: string, data: Partial<PropertyInput>) {
     where: { id },
     data: {
       ...data,
+      mapAddress:
+        data.mapAddress === undefined
+          ? undefined
+          : data.mapAddress?.trim() || null,
+      latitude: data.latitude === undefined ? undefined : data.latitude ?? null,
+      longitude:
+        data.longitude === undefined ? undefined : data.longitude ?? null,
       airbnbIcalUrl: data.airbnbIcalUrl || null,
       bookingIcalUrl: data.bookingIcalUrl || null,
     },

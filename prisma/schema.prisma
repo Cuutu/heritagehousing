@@ -28,6 +28,10 @@ model Property {
   name           String
   description    String
   location       String
+  /// Dirección completa (calle, número) para mostrar en mapa y buscadores
+  mapAddress     String?
+  latitude       Float?
+  longitude      Float?
   pricePerNight  Decimal       @db.Decimal(10, 2)
   maxGuests      Int
   bedrooms       Int
