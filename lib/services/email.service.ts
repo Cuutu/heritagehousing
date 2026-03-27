@@ -2,7 +2,10 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = "Heritage Housing <noreply@heritagehousing.cl>";
+const fromAddress = process.env.RESEND_FROM ?? "hola@heritagehousing.cl";
+const FROM_EMAIL = `Heritage Housing <${fromAddress}>`;
+
+const notifyTo = process.env.RESEND_NOTIFY_TO ?? "contacto@heritagehousing.cl";
 
 export async function sendConfirmationEmail(
   reservation: {
@@ -57,6 +60,9 @@ export async function sendConfirmationEmail(
   });
 }
 
+/** Same as sendConfirmationEmail; used by Stripe webhook naming convention. */
+export const sendBookingConfirmation = sendConfirmationEmail;
+
 export async function sendLeadNotification(
   lead: {
     name: string;
@@ -77,7 +83,7 @@ export async function sendLeadNotification(
 
   return resend.emails.send({
     from: FROM_EMAIL,
-    to: "contacto@heritagehousing.cl",
+    to: notifyTo,
     subject: `Nuevo Lead - ${projectTypeLabels[lead.projectType] || lead.projectType}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -113,7 +119,7 @@ export async function sendReservationNotification(
 ) {
   return resend.emails.send({
     from: FROM_EMAIL,
-    to: "contacto@heritagehousing.cl",
+    to: notifyTo,
     subject: `Nueva Reserva Directa - ${reservation.property.name}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

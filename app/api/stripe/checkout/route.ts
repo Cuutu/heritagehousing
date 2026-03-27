@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createCheckoutSession } from "@/lib/services/stripe.service";
 import { createNewReservation } from "@/lib/services/reservation.service";
 import { getPropertyById } from "@/lib/repositories/property.repository";
+import {
+  checkDateConflict,
+  updateReservationStripeId,
+} from "@/lib/repositories/reservation.repository";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -20,6 +24,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = checkoutSchema.parse(body);
 
+    const checkIn = new Date(data.checkIn);
+    const checkOut = new Date(data.checkOut);
+
     const property = await getPropertyById(data.propertyId);
     if (!property) {
       return NextResponse.json(
@@ -28,10 +35,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const unavailable = await checkDateConflict(
+      data.propertyId,
+      checkIn,
+      checkOut
+    );
+    if (unavailable) {
+      return NextResponse.json(
+        {
+          error: "Las fechas seleccionadas ya no están disponibles",
+        },
+        { status: 409 }
+      );
+    }
+
     const reservation = await createNewReservation({
       propertyId: data.propertyId,
-      checkIn: new Date(data.checkIn),
-      checkOut: new Date(data.checkOut),
+      checkIn,
+      checkOut,
       guestName: data.guestName,
       guestEmail: data.guestEmail,
       guestPhone: data.guestPhone,
@@ -40,12 +61,17 @@ export async function POST(request: NextRequest) {
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const successUrl = `${appUrl}/reserva/confirmacion?reservation_id=${encodeURIComponent(
+      reservation.id
+    )}&session_id={CHECKOUT_SESSION_ID}`;
+
     const session = await createCheckoutSession(
       [
         {
+          reservationId: reservation.id,
           propertyId: data.propertyId,
-          checkIn: new Date(data.checkIn),
-          checkOut: new Date(data.checkOut),
+          checkIn,
+          checkOut,
           guestCount: data.guestCount,
           guestName: data.guestName,
           guestEmail: data.guestEmail,
@@ -53,9 +79,18 @@ export async function POST(request: NextRequest) {
           notes: data.notes,
         },
       ],
-      `${appUrl}/alquileres/${property.slug}?success=true&reservation=${reservation.id}`,
+      successUrl,
       `${appUrl}/alquileres/${property.slug}?cancelled=true`
     );
+
+    await updateReservationStripeId(reservation.id, session.id);
+
+    if (!session.url) {
+      return NextResponse.json(
+        { error: "No se pudo crear la sesión de pago" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (error) {

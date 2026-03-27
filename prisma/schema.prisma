@@ -8,13 +8,27 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum ReservationSource {
+  DIRECT
+  AIRBNB
+  BOOKING
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  CANCELLED
+}
+
 model Property {
   id             String        @id @default(cuid())
   slug           String        @unique
   name           String
   description    String
   location       String
-  pricePerNight  Decimal      @db.Decimal(10, 2)
+  pricePerNight  Decimal       @db.Decimal(10, 2)
   maxGuests      Int
   bedrooms       Int
   bathrooms      Int
@@ -33,24 +47,26 @@ model Property {
 }
 
 model Reservation {
-  id            String        @id @default(cuid())
+  id            String              @id @default(cuid())
   propertyId    String
-  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  source        String
-  checkIn       DateTime      @db.Date
-  checkOut      DateTime      @db.Date
+  property      Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  source        ReservationSource   @default(DIRECT)
+  checkIn       DateTime            @db.Date
+  checkOut      DateTime            @db.Date
   guestName     String
   guestEmail    String
   guestPhone    String?
-  totalPrice    Decimal       @db.Decimal(10, 2)
-  paymentStatus String        @default("PENDING")
+  guestCount    Int                 @default(1)
+  totalPrice    Decimal             @db.Decimal(10, 2)
+  paymentStatus PaymentStatus       @default(PENDING)
   stripeId      String?
   externalId    String?
   notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   @@index([propertyId])
+  @@index([propertyId, checkIn, checkOut])
   @@index([checkIn, checkOut])
   @@index([paymentStatus])
   @@index([source])
@@ -66,6 +82,7 @@ model BlockedDate {
 
   @@unique([propertyId, date])
   @@index([propertyId])
+  @@index([propertyId, date])
 }
 
 model Project {

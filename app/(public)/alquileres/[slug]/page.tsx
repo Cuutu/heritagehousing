@@ -18,6 +18,7 @@ import { AvailabilityCalendar } from "@/components/calendar/AvailabilityCalendar
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { formatCLP } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import { getUnavailableDates } from "@/lib/services/availability.service";
 
 export default async function PropertyDetailPage({
   params,
@@ -26,17 +27,13 @@ export default async function PropertyDetailPage({
 }) {
   const property = await prisma.property.findUnique({
     where: { slug: params.slug, isActive: true },
-    include: {
-      blockedDates: {
-        where: { date: { gte: new Date() } },
-        select: { date: true, source: true },
-      },
-    },
   });
 
   if (!property) {
     notFound();
   }
+
+  const unavailableDates = await getUnavailableDates(property.id);
 
   const propertyData = {
     id: property.id,
@@ -50,7 +47,7 @@ export default async function PropertyDetailPage({
     bathrooms: property.bathrooms,
     images: property.images,
     amenities: property.amenities.map((a) => ({ key: a.toLowerCase(), label: a })),
-    blockedDates: property.blockedDates,
+    blockedDates: unavailableDates,
   };
 
   return (
@@ -134,7 +131,7 @@ export default async function PropertyDetailPage({
             <h2 className="text-xl font-semibold mb-4">Disponibilidad</h2>
             <AvailabilityCalendar
               propertyId={propertyData.id}
-              blockedDates={propertyData.blockedDates.map((b) => new Date(b.date))}
+              blockedDates={propertyData.blockedDates}
             />
             <div className="flex gap-4 mt-4 text-sm">
               <div className="flex items-center gap-2">

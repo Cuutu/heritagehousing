@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { calculateTotalPrice } from "@/lib/services/availability.service";
-import { sendConfirmationEmail } from "@/lib/services/email.service";
+import { sendBookingConfirmation } from "@/lib/services/email.service";
+import { PaymentStatus as PS } from "@prisma/client";
 
 interface ReservationData {
   propertyId: string;
@@ -31,10 +32,11 @@ export async function createNewReservation(
       guestName: data.guestName,
       guestEmail: data.guestEmail,
       guestPhone: data.guestPhone || null,
+      guestCount: data.guestCount ?? 1,
       totalPrice,
       source: "DIRECT",
-      paymentStatus: "PENDING",
-      stripeId: stripeSessionId,
+      paymentStatus: PS.PENDING,
+      stripeId: stripeSessionId ?? null,
       notes: data.notes,
     },
     include: {
@@ -45,14 +47,31 @@ export async function createNewReservation(
   return reservation;
 }
 
-export async function confirmReservation(reservationId: string) {
-  const reservation = await prisma.reservation.update({
+/** Marks reservation paid after Stripe checkout; stores session id and emails guest. Idempotent if already PAID. */
+export async function markReservationPaidFromStripe(
+  reservationId: string,
+  stripeSessionId: string
+) {
+  const existing = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    data: { paymentStatus: "PAID" },
     include: { property: true },
   });
 
-  await sendConfirmationEmail(reservation);
+  if (!existing) {
+    throw new Error(`Reservation not found: ${reservationId}`);
+  }
+
+  if (existing.paymentStatus === PS.PAID) {
+    return existing;
+  }
+
+  const reservation = await prisma.reservation.update({
+    where: { id: reservationId },
+    data: { paymentStatus: PS.PAID, stripeId: stripeSessionId },
+    include: { property: true },
+  });
+
+  await sendBookingConfirmation(reservation);
 
   return reservation;
 }
@@ -60,13 +79,13 @@ export async function confirmReservation(reservationId: string) {
 export async function cancelReservation(reservationId: string) {
   return prisma.reservation.update({
     where: { id: reservationId },
-    data: { paymentStatus: "CANCELLED" },
+    data: { paymentStatus: PS.CANCELLED },
   });
 }
 
 export async function refundReservation(reservationId: string) {
   return prisma.reservation.update({
     where: { id: reservationId },
-    data: { paymentStatus: "REFUNDED" },
+    data: { paymentStatus: PS.REFUNDED },
   });
 }

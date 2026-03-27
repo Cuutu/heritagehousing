@@ -173,7 +173,7 @@ export function AvailabilityCalendar({
   };
 
   return (
-    <div>
+    <div data-property-id={propertyId}>
       <div className="flex items-center justify-between mb-4">
         <Button
           variant="outline"
@@ -212,7 +212,7 @@ export function AvailabilityCalendar({
             ) : (
               <>
                 <strong>Check-in:</strong>{" "}
-                {format(selectionStart, "dd/MM/yyyy", { locale: es })} - Selcciona
+                {format(selectionStart, "dd/MM/yyyy", { locale: es })} - Selecciona
                 fecha de salida
               </>
             )}

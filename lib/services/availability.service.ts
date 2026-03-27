@@ -11,6 +11,7 @@ import {
   startOfDay,
   endOfDay,
   addDays,
+  addYears,
   eachDayOfInterval,
   isWithinInterval,
   parseISO,
@@ -25,7 +26,18 @@ export async function isDateAvailable(
   return !hasConflict;
 }
 
+/**
+ * BlockedDate rows (iCal) + reservation nights (PENDING or PAID), merged for UI calendars.
+ */
 export async function getUnavailableDates(
+  propertyId: string
+): Promise<Date[]> {
+  const startDate = startOfDay(new Date());
+  const endDate = endOfDay(addYears(new Date(), 2));
+  return getUnavailableDatesInRange(propertyId, startDate, endDate);
+}
+
+export async function getUnavailableDatesInRange(
   propertyId: string,
   startDate: Date,
   endDate: Date

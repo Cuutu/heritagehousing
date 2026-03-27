@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -14,9 +14,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      synced: result.synced,
-      errors: result.errors,
-      message: `Sincronizados ${result.synced} días bloqueados de ${result.errors} fuentes con errores`,
+      ...result,
+      message: result.summaryMessage,
     });
   } catch (error) {
     console.error("iCal sync error:", error);
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     message: "Use POST to trigger iCal sync",
   });

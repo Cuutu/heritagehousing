@@ -3,6 +3,7 @@ import { getPropertyById } from "@/lib/repositories/property.repository";
 import { getReservationsForProperty } from "@/lib/repositories/reservation.repository";
 import { generateIcalFeed } from "@/lib/services/ical.service";
 import { startOfDay, endOfDay, addMonths } from "date-fns";
+import { PaymentStatus } from "@prisma/client";
 
 export async function GET(
   request: NextRequest,
@@ -28,7 +29,7 @@ export async function GET(
     );
 
     const activeReservations = reservations
-      .filter((r) => r.paymentStatus === "PAID" || r.paymentStatus === "PENDING")
+      .filter((r) => r.paymentStatus === PaymentStatus.PAID)
       .map((r) => ({
         checkIn: r.checkIn,
         checkOut: r.checkOut,

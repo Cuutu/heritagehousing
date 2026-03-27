@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { constructWebhookEvent } from "@/lib/services/stripe.service";
-import { confirmReservation } from "@/lib/services/reservation.service";
+import { markReservationPaidFromStripe } from "@/lib/services/reservation.service";
+import { getReservationById } from "@/lib/repositories/reservation.repository";
+import { prisma } from "@/lib/prisma";
+import { PaymentStatus } from "@prisma/client";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -19,44 +22,61 @@ export async function POST(request: NextRequest) {
 
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
+        try {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const reservationId = session.metadata?.reservationId;
 
-        if (session.metadata?.items) {
-          const items = JSON.parse(session.metadata.items);
-
-          for (const item of items) {
-            const { getReservationById, createReservation, updateReservationStripeId } =
-              await import("@/lib/repositories/reservation.repository");
-
-            let reservation = await getReservationById(item.reservationId || session.id);
-
-            if (!reservation) {
-              const { calculateTotalPrice } = await import(
-                "@/lib/services/availability.service"
-              );
-
-              const totalPrice = await calculateTotalPrice(
-                item.propertyId,
-                new Date(item.checkIn),
-                new Date(item.checkOut)
-              );
-
-              const newReservation = await createReservation({
-                propertyId: item.propertyId,
-                checkIn: new Date(item.checkIn),
-                checkOut: new Date(item.checkOut),
-                guestName: item.guestName,
-                guestEmail: item.guestEmail,
-                guestPhone: item.guestPhone || undefined,
-                notes: item.notes,
-                totalPrice,
-                stripeId: session.id,
-              });
-
-              await updateReservationStripeId(newReservation.id, session.id);
-              await confirmReservation(newReservation.id);
-            }
+          if (!reservationId) {
+            console.error(
+              "Stripe webhook: checkout.session.completed missing reservationId in metadata"
+            );
+            break;
           }
+
+          const reservation = await getReservationById(reservationId);
+          if (!reservation) {
+            console.error(
+              `Stripe webhook: reservation not found: ${reservationId}`
+            );
+            break;
+          }
+
+          await markReservationPaidFromStripe(reservation.id, session.id);
+        } catch (err) {
+          console.error(
+            "Stripe webhook: checkout.session.completed handler error:",
+            err
+          );
+          throw err;
+        }
+        break;
+      }
+
+      case "checkout.session.expired": {
+        try {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const reservationId = session.metadata?.reservationId;
+
+          if (!reservationId) {
+            console.error(
+              "Stripe webhook: checkout.session.expired missing reservationId"
+            );
+            break;
+          }
+
+          await prisma.reservation.updateMany({
+            where: {
+              id: reservationId,
+              paymentStatus: PaymentStatus.PENDING,
+            },
+            data: { paymentStatus: PaymentStatus.CANCELLED },
+          });
+        } catch (err) {
+          console.error(
+            "Stripe webhook: checkout.session.expired handler error:",
+            err
+          );
+          throw err;
         }
         break;
       }

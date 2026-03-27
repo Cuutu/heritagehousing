@@ -1,9 +1,13 @@
 import { prisma } from "@/lib/prisma";
+import {
+  PaymentStatus,
+  ReservationSource,
+} from "@prisma/client";
 
 export async function getAllReservations(filters?: {
   propertyId?: string;
-  source?: string;
-  status?: string;
+  source?: ReservationSource;
+  status?: PaymentStatus;
   checkInFrom?: Date;
   checkInTo?: Date;
 }) {
@@ -57,6 +61,7 @@ export async function createReservation(data: {
   guestName: string;
   guestEmail: string;
   guestPhone?: string;
+  guestCount?: number;
   totalPrice: number;
   stripeId?: string;
   notes?: string;
@@ -69,9 +74,10 @@ export async function createReservation(data: {
       guestName: data.guestName,
       guestEmail: data.guestEmail,
       guestPhone: data.guestPhone || null,
+      guestCount: data.guestCount ?? 1,
       totalPrice: data.totalPrice,
       source: "DIRECT",
-      paymentStatus: "PENDING",
+      paymentStatus: PaymentStatus.PENDING,
       stripeId: data.stripeId,
       notes: data.notes,
     },
@@ -81,7 +87,7 @@ export async function createReservation(data: {
   });
 }
 
-export async function updateReservationStatus(id: string, status: string) {
+export async function updateReservationStatus(id: string, status: PaymentStatus) {
   return prisma.reservation.update({
     where: { id },
     data: { paymentStatus: status },
@@ -105,7 +111,7 @@ export async function checkDateConflict(
     where: {
       propertyId,
       id: excludeReservationId ? { not: excludeReservationId } : undefined,
-      paymentStatus: { in: ["PENDING", "PAID"] },
+      paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.PAID] },
       AND: [
         { checkIn: { lt: checkOut } },
         { checkOut: { gt: checkIn } },
@@ -138,7 +144,7 @@ export async function getReservationsForProperty(
       propertyId,
       checkIn: { lte: endDate },
       checkOut: { gte: startDate },
-      paymentStatus: { in: ["PENDING", "PAID"] },
+      paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.PAID] },
     },
   });
 }

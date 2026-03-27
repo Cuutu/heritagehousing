@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { leadSchema } from "@/lib/validations/lead.schema";
+import { sendLeadNotification } from "@/lib/services/email.service";
 import { z } from "zod";
 
 export async function submitLead(formData: FormData) {
@@ -9,7 +10,7 @@ export async function submitLead(formData: FormData) {
     const data = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
-      phone: formData.get("phone") as string || undefined,
+      phone: (formData.get("phone") as string) || undefined,
       projectType: formData.get("projectType") as string,
       message: formData.get("message") as string,
     };
@@ -25,6 +26,18 @@ export async function submitLead(formData: FormData) {
         message: validated.message,
       },
     });
+
+    try {
+      await sendLeadNotification({
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
+        projectType: validated.projectType,
+        message: validated.message,
+      });
+    } catch (emailError) {
+      console.error("Lead notification email failed:", emailError);
+    }
 
     return { success: true, message: "Lead creado exitosamente" };
   } catch (error) {

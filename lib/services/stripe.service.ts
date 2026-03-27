@@ -6,7 +6,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
 });
 
-interface CheckoutItem {
+export interface CheckoutItem {
+  reservationId: string;
   propertyId: string;
   checkIn: Date;
   checkOut: Date;
@@ -22,13 +23,23 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<Stripe.Checkout.Session> {
+  if (items.length === 0) {
+    throw new Error("Checkout requires at least one item");
+  }
+
+  const primaryReservationId = items[0].reservationId;
+
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
   for (const item of items) {
     const property = await getPropertyById(item.propertyId);
     if (!property) throw new Error(`Propiedad no encontrada: ${item.propertyId}`);
 
-    const nights = await calculateNights(item.propertyId, item.checkIn, item.checkOut);
+    const nights = await calculateNights(
+      item.propertyId,
+      item.checkIn,
+      item.checkOut
+    );
     if (nights <= 0) throw new Error("Fechas inválidas");
 
     lineItems.push({
@@ -52,8 +63,10 @@ export async function createCheckoutSession(
     success_url: successUrl,
     cancel_url: cancelUrl,
     metadata: {
+      reservationId: primaryReservationId,
       items: JSON.stringify(
         items.map((item) => ({
+          reservationId: item.reservationId,
           propertyId: item.propertyId,
           checkIn: item.checkIn.toISOString(),
           checkOut: item.checkOut.toISOString(),
@@ -64,6 +77,11 @@ export async function createCheckoutSession(
           notes: item.notes || "",
         }))
       ),
+    },
+    payment_intent_data: {
+      metadata: {
+        reservationId: primaryReservationId,
+      },
     },
     customer_email: items[0].guestEmail,
   });

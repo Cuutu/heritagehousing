@@ -1,10 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { PropertyInput, PropertyFilter } from "@/lib/validations/property.schema";
-import { Prisma } from "@prisma/client";
+import { PaymentStatus, Prisma } from "@prisma/client";
 
 export async function getActiveProperties() {
   return prisma.property.findMany({
     where: { isActive: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getAllProperties() {
+  return prisma.property.findMany({
     orderBy: { createdAt: "desc" },
   });
 }
@@ -31,7 +37,7 @@ export async function getPropertyById(id: string) {
       reservations: {
         where: {
           checkOut: { gte: new Date() },
-          paymentStatus: "PAID",
+          paymentStatus: PaymentStatus.PAID,
         },
       },
     },
@@ -58,7 +64,7 @@ export async function getFilteredProperties(filter: PropertyFilter) {
   if (checkIn && checkOut) {
     const conflictingReservations = await prisma.reservation.findMany({
       where: {
-        paymentStatus: { in: ["PENDING", "PAID"] },
+        paymentStatus: { in: [PaymentStatus.PENDING, PaymentStatus.PAID] },
         OR: [
           {
             checkIn: { lte: checkOut },

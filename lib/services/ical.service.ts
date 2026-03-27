@@ -46,7 +46,7 @@ export async function syncIcalFromUrl(
   propertyId: string,
   icalUrl: string,
   source: string
-): Promise<number> {
+): Promise<{ eventsFound: number; daysBlocked: number; skipped: boolean }> {
   try {
     const response = await fetch(icalUrl);
     if (!response.ok) {
@@ -77,50 +77,71 @@ export async function syncIcalFromUrl(
       await addBlockedDates(propertyId, dates, source);
     }
 
-    return dates.length;
+    return {
+      eventsFound: events.length,
+      daysBlocked: dates.length,
+      skipped: false,
+    };
   } catch (error) {
     console.error(`iCal sync error for property ${propertyId}:`, error);
-    return 0;
+    return { eventsFound: 0, daysBlocked: 0, skipped: true };
   }
 }
 
 export async function syncAllIcalFeeds(): Promise<{
   synced: number;
   errors: number;
+  totalEventsFound: number;
+  feedsProcessed: number;
+  summaryMessage: string;
 }> {
   const properties = await getActiveProperties();
   let synced = 0;
   let errors = 0;
+  let totalEventsFound = 0;
+  let feedsProcessed = 0;
 
   for (const property of properties) {
     if (property.airbnbIcalUrl) {
-      try {
-        const count = await syncIcalFromUrl(
-          property.id,
-          property.airbnbIcalUrl,
-          "airbnb"
-        );
-        synced += count;
-      } catch {
+      feedsProcessed++;
+      const result = await syncIcalFromUrl(
+        property.id,
+        property.airbnbIcalUrl,
+        "airbnb"
+      );
+      totalEventsFound += result.eventsFound;
+      if (result.skipped) {
         errors++;
+      } else {
+        synced += result.daysBlocked;
       }
     }
 
     if (property.bookingIcalUrl) {
-      try {
-        const count = await syncIcalFromUrl(
-          property.id,
-          property.bookingIcalUrl,
-          "booking"
-        );
-        synced += count;
-      } catch {
+      feedsProcessed++;
+      const result = await syncIcalFromUrl(
+        property.id,
+        property.bookingIcalUrl,
+        "booking"
+      );
+      totalEventsFound += result.eventsFound;
+      if (result.skipped) {
         errors++;
+      } else {
+        synced += result.daysBlocked;
       }
     }
   }
 
-  return { synced, errors };
+  const summaryMessage = `Feeds: ${feedsProcessed}, eventos encontrados: ${totalEventsFound}, días bloqueados escritos: ${synced}, errores: ${errors}`;
+
+  return {
+    synced,
+    errors,
+    totalEventsFound,
+    feedsProcessed,
+    summaryMessage,
+  };
 }
 
 export function generateIcalFeed(
@@ -141,8 +162,10 @@ export function generateIcalFeed(
 
   reservations.forEach((res, index) => {
     const uid = `${Date.now()}-${index}@heritagehousing.cl`;
-    const dtstart = res.checkIn.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-    const dtend = res.checkOut.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    const dtstart =
+      res.checkIn.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    const dtend =
+      res.checkOut.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
     lines.push(
       "BEGIN:VEVENT",
