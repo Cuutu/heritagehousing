@@ -42,6 +42,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatCLP } from "@/lib/utils";
 import Link from "next/link";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   createPropertyAction,
   updatePropertyAction,
@@ -391,28 +392,30 @@ export function PropertiesAdminClient({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Propiedades</h1>
-          <p className="text-muted-foreground">
-            Gestión de propiedades y sincronización iCal
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={handleSync} disabled={isSyncing} variant="outline">
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
-            />
-            Sincronizar iCal
-          </Button>
-          <Dialog open={isCreating} onOpenChange={setIsCreating}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Nueva propiedad
-              </Button>
-            </DialogTrigger>
+    <div className="space-y-8">
+      <AdminPageHeader
+        title="Propiedades"
+        description="Creá y editá alojamientos, imágenes y enlaces iCal. La sincronización trae bloqueos de Airbnb/Booking."
+        actions={
+          <>
+            <Button
+              onClick={handleSync}
+              disabled={isSyncing}
+              variant="outline"
+              className="border-[var(--brand-border)]"
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+              />
+              Sincronizar iCal
+            </Button>
+            <Dialog open={isCreating} onOpenChange={setIsCreating}>
+              <DialogTrigger asChild>
+                <Button className="bg-[var(--headline)] text-white hover:bg-[var(--headline)]/90">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nueva propiedad
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Nueva propiedad</DialogTitle>
@@ -434,29 +437,47 @@ export function PropertiesAdminClient({
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {syncMsg && (
-        <p className="text-sm rounded-md border p-3 bg-muted">{syncMsg}</p>
+        <p className="rounded-lg border border-[var(--brand-border)] bg-[var(--brand-accent-soft)] px-4 py-3 text-sm text-[var(--headline)]">
+          {syncMsg}
+        </p>
       )}
 
-      <div className="border rounded-lg overflow-x-auto">
+      <div className="overflow-hidden rounded-lg border border-[var(--brand-border)] bg-white shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Imagen</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Ubicación</TableHead>
-              <TableHead>Precio</TableHead>
-              <TableHead>Capacidad</TableHead>
-              <TableHead>Estado</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-[100px] font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Imagen
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Nombre
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Ubicación
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Precio
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Capacidad
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Estado
+              </TableHead>
               <TableHead className="w-[50px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {properties.map((property) => (
-              <TableRow key={property.id}>
+              <TableRow
+                key={property.id}
+                className="border-[var(--brand-border)]/80 hover:bg-[var(--bg-surface)]/80"
+              >
                 <TableCell>
                   <div className="relative w-16 h-12 rounded overflow-hidden">
                     <Image
@@ -479,7 +500,9 @@ export function PropertiesAdminClient({
                   </div>
                 </TableCell>
                 <TableCell>{property.location}</TableCell>
-                <TableCell>{formatCLP(property.pricePerNight)}</TableCell>
+                <TableCell className="font-mono text-sm tabular-nums">
+                  {formatCLP(property.pricePerNight)}
+                </TableCell>
                 <TableCell>{property.maxGuests} huéspedes</TableCell>
                 <TableCell>
                   <Badge variant={property.isActive ? "default" : "secondary"}>

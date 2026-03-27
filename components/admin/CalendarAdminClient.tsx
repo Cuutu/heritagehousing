@@ -34,6 +34,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { syncIcalAdminAction } from "@/app/actions/sync.actions";
 import { addManualBlockedRangeAction } from "@/app/actions/blockedDate.actions";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { adminCalendarSourceBg } from "@/lib/admin-badges";
 
 export type CalProperty = { id: string; name: string };
 export type CalReservation = {
@@ -49,15 +51,6 @@ export type CalBlocked = {
   propertyId: string;
   date: string;
   source: string;
-};
-
-const sourceColors: Record<string, string> = {
-  DIRECT: "bg-blue-600",
-  AIRBNB: "bg-pink-500",
-  BOOKING: "bg-indigo-600",
-  MANUAL: "bg-stone-500",
-  airbnb: "bg-pink-500",
-  booking: "bg-indigo-600",
 };
 
 export function CalendarAdminClient({
@@ -129,47 +122,61 @@ export function CalendarAdminClient({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendario</h1>
-          <p className="text-muted-foreground">Vista unificada de ocupación</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={handleSync} disabled={isSyncing} type="button">
-            <RefreshCw
-              className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")}
-            />
-            Sincronizar iCal
-          </Button>
-          <Button type="button" onClick={() => setBlockOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Bloquear fechas
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-8">
+      <AdminPageHeader
+        title="Calendario"
+        description="Vista mensual por propiedad: reservas por canal y bloqueos (incluye iCal). Usá “Bloquear fechas” para cierres manuales."
+        actions={
+          <>
+            <Button
+              onClick={handleSync}
+              disabled={isSyncing}
+              type="button"
+              variant="outline"
+              className="border-[var(--brand-border)]"
+            >
+              <RefreshCw
+                className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")}
+              />
+              Sincronizar iCal
+            </Button>
+            <Button
+              type="button"
+              className="bg-[var(--headline)] text-white hover:bg-[var(--headline)]/90"
+              onClick={() => setBlockOpen(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Bloquear fechas
+            </Button>
+          </>
+        }
+      />
 
       {syncMsg && (
-        <p className="text-sm border rounded-md p-3 bg-muted">{syncMsg}</p>
+        <p className="rounded-lg border border-[var(--brand-border)] bg-[var(--brand-accent-soft)] px-4 py-3 text-sm text-[var(--headline)]">
+          {syncMsg}
+        </p>
       )}
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col items-center justify-between gap-4 rounded-lg border border-[var(--brand-border)] bg-white p-4 shadow-sm md:flex-row">
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="icon"
             type="button"
+            className="border-[var(--brand-border)]"
             onClick={() => setCurrentDate(subMonths(currentDate, 1))}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-xl font-semibold min-w-[200px] text-center capitalize">
+          <h2 className="min-w-[200px] text-center font-display text-xl font-normal capitalize text-[var(--headline)]">
             {format(currentDate, "MMMM yyyy", { locale: es })}
           </h2>
           <Button
             variant="outline"
             size="icon"
             type="button"
+            className="border-[var(--brand-border)]"
             onClick={() => setCurrentDate(addMonths(currentDate, 1))}
           >
             <ChevronRight className="h-4 w-4" />
@@ -177,7 +184,7 @@ export function CalendarAdminClient({
         </div>
 
         <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-          <SelectTrigger className="w-[220px]">
+          <SelectTrigger className="w-full border-[var(--brand-border)] md:w-[240px]">
             <SelectValue placeholder="Propiedad" />
           </SelectTrigger>
           <SelectContent>
@@ -191,31 +198,37 @@ export function CalendarAdminClient({
         </Select>
       </div>
 
-      <div className="flex gap-2 mb-4 flex-wrap text-xs">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-blue-600" /> Directa
+      <div className="mb-2 flex flex-wrap gap-x-4 gap-y-2 rounded-md border border-dashed border-[var(--brand-border)] bg-[var(--bg-surface)]/80 px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+        <span className="flex items-center gap-2">
+          <span className={cn("h-2.5 w-2.5 rounded-sm", adminCalendarSourceBg("DIRECT"))} />{" "}
+          Directa
         </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-pink-500" /> Airbnb
+        <span className="flex items-center gap-2">
+          <span className={cn("h-2.5 w-2.5 rounded-sm", adminCalendarSourceBg("AIRBNB"))} />{" "}
+          Airbnb
         </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-indigo-600" /> Booking
+        <span className="flex items-center gap-2">
+          <span className={cn("h-2.5 w-2.5 rounded-sm", adminCalendarSourceBg("BOOKING"))} />{" "}
+          Booking
         </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-stone-500" /> Manual
+        <span className="flex items-center gap-2">
+          <span className={cn("h-2.5 w-2.5 rounded-sm", adminCalendarSourceBg("MANUAL"))} />{" "}
+          Manual
         </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-red-600" /> Bloqueado
+        <span className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-sm bg-red-600" /> Bloqueado
         </span>
       </div>
 
       <div className="grid gap-4">
         {(selectedProperty === "all" ? properties : properties.filter((p) => p.id === selectedProperty)).map(
           (property) => (
-            <div key={property.id} className="space-y-2">
-              <h3 className="font-semibold">{property.name}</h3>
-              <div className="border rounded-lg p-4 overflow-x-auto">
-                <div className="grid grid-cols-7 gap-2 min-w-[700px]">
+            <div key={property.id} className="space-y-3">
+              <h3 className="font-display text-lg font-normal text-[var(--headline)]">
+                {property.name}
+              </h3>
+              <div className="overflow-x-auto rounded-lg border border-[var(--brand-border)] bg-white p-4 shadow-sm">
+                <div className="grid min-w-[700px] grid-cols-7 gap-2">
                   {["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"].map((d) => (
                     <div
                       key={d}
@@ -246,8 +259,8 @@ export function CalendarAdminClient({
                       <div
                         key={day.toISOString()}
                         className={cn(
-                          "min-h-[80px] border rounded-md p-1 text-sm",
-                          isToday && "ring-2 ring-primary"
+                          "min-h-[80px] rounded-md border border-[var(--brand-border)]/70 bg-[var(--bg)]/50 p-1 text-sm",
+                          isToday && "ring-2 ring-[var(--brand-accent)] ring-offset-1"
                         )}
                       >
                         <div className="font-medium text-xs mb-1">
@@ -257,8 +270,8 @@ export function CalendarAdminClient({
                           <div
                             key={res.id}
                             className={cn(
-                              "text-xs text-white px-1 py-0.5 rounded mb-1 truncate",
-                              sourceColors[res.source] ?? "bg-stone-500"
+                              "mb-1 truncate rounded px-1 py-0.5 text-xs text-white",
+                              adminCalendarSourceBg(res.source)
                             )}
                             title={res.guestName}
                           >

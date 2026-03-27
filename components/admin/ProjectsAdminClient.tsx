@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   createProjectAction,
   updateProjectAction,
@@ -240,19 +241,18 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Proyectos</h1>
-          <p className="text-muted-foreground">Portfolio de remodelaciones</p>
-        </div>
-        <Dialog open={isCreating} onOpenChange={setIsCreating}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo proyecto
-            </Button>
-          </DialogTrigger>
+    <div className="space-y-8">
+      <AdminPageHeader
+        title="Proyectos"
+        description="Portfolio de remodelaciones: antes/después, categoría y visibilidad en el sitio público."
+        actions={
+          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <DialogTrigger asChild>
+              <Button className="bg-[var(--headline)] text-white hover:bg-[var(--headline)]/90">
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo proyecto
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nuevo proyecto</DialogTitle>
@@ -272,23 +272,37 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+        }
+      />
 
-      <div className="border rounded-lg overflow-x-auto">
+      <div className="overflow-hidden rounded-lg border border-[var(--brand-border)] bg-white shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Miniatura</TableHead>
-              <TableHead>Título</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Área</TableHead>
-              <TableHead>Estado</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-[100px] font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Miniatura
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Título
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Categoría
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Área
+              </TableHead>
+              <TableHead className="font-mono text-[10px] uppercase tracking-wider text-[var(--paragraph)]">
+                Estado
+              </TableHead>
               <TableHead className="w-[40px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {projects.map((p) => (
-              <TableRow key={p.id}>
+              <TableRow
+                key={p.id}
+                className="border-[var(--brand-border)]/80 hover:bg-[var(--bg-surface)]/80"
+              >
                 <TableCell>
                   <div className="relative w-16 h-12 rounded overflow-hidden">
                     <Image
