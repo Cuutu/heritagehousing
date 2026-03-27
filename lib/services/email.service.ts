@@ -1,6 +1,15 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendSingleton: Resend | null = null;
+
+function getResend(): Resend {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+  resendSingleton ??= new Resend(key);
+  return resendSingleton;
+}
 
 const fromAddress = process.env.RESEND_FROM ?? "hola@heritagehousing.cl";
 const FROM_EMAIL = `Heritage Housing <${fromAddress}>`;
@@ -27,7 +36,7 @@ export async function sendConfirmationEmail(
       (1000 * 60 * 60 * 24)
   );
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to: reservation.guestEmail,
     subject: `Confirmación de Reserva - ${reservation.property.name}`,
@@ -81,7 +90,7 @@ export async function sendLeadNotification(
     otro: "Otro",
   };
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to: notifyTo,
     subject: `Nuevo Lead - ${projectTypeLabels[lead.projectType] || lead.projectType}`,
@@ -117,7 +126,7 @@ export async function sendReservationNotification(
     };
   }
 ) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to: notifyTo,
     subject: `Nueva Reserva Directa - ${reservation.property.name}`,
