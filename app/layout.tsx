@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
-import { Manrope, Outfit } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  DM_Sans,
+  DM_Mono,
+} from "next/font/google";
 import { AppProviders } from "@/components/providers/AppProviders";
 import "./globals.css";
 
-const manrope = Manrope({
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  weight: ["300", "400", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
   display: "swap",
 });
 
-const outfit = Outfit({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  weight: ["300", "400", "500"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
   display: "swap",
 });
 
@@ -33,8 +47,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${manrope.variable} ${outfit.variable}`}>
-      <body className={`${manrope.className} min-h-screen bg-background antialiased`}>
+    <html
+      lang="es"
+      className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable}`}
+    >
+      <body
+        className={`${dmSans.className} min-h-screen bg-background font-sans antialiased`}
+      >
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

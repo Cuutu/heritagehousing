@@ -1,41 +1,50 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, ArrowUpRight, Shield, Sparkles, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PropertyCard } from "@/components/property/PropertyCard";
-import { ProjectCard } from "@/components/renovation/ProjectCard";
+import { Star, Building2, Globe2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { HomeHero } from "@/components/home/HomeHero";
+import { RevealOnScroll } from "@/components/home/RevealOnScroll";
+import { LandingPropertyCard } from "@/components/home/LandingPropertyCard";
+import { RenovationShowcaseCard } from "@/components/home/RenovationShowcaseCard";
 
-const pillars = [
+const whyFeatures = [
   {
-    icon: Shield,
+    n: "01",
     title: "Reserva segura",
-    text: "Pagos con estándares actuales. Tu información protegida.",
+    body: "Pagos con estándares actuales y comunicación clara en cada paso.",
   },
   {
-    icon: Sparkles,
-    title: "Curaduría real",
-    text: "Cada espacio cumple un estándar claro de calidad y mantenimiento.",
+    n: "02",
+    title: "Atención personalizada",
+    body: "Hablás con quien gestiona la propiedad o el proyecto, sin intermediarios innecesarios.",
   },
   {
-    icon: Star,
-    title: "Atención directa",
-    text: "Hablás con quien gestiona la propiedad o el proyecto.",
+    n: "03",
+    title: "Propiedades verificadas",
+    body: "Curaduría real: limpieza, mantenimiento y detalles que se notan al llegar.",
+  },
+  {
+    n: "04",
+    title: "Sin sorpresas",
+    body: "Precios y condiciones transparentes. Lo que ves es lo que reservás.",
   },
 ];
 
 export default async function HomePage() {
-  const properties = await prisma.property.findMany({
-    where: { isActive: true },
-    take: 3,
-  });
-
-  const projects = await prisma.project.findMany({
-    where: { isActive: true },
-    take: 2,
-  });
+  const [properties, projects, propertyCount] = await Promise.all([
+    prisma.property.findMany({
+      where: { isActive: true },
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.project.findMany({
+      where: { isActive: true },
+      take: 2,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.property.count({ where: { isActive: true } }),
+  ]);
 
   const formattedProperties = properties.map((p) => ({
     id: p.id,
@@ -59,266 +68,286 @@ export default async function HomePage() {
     afterImages: p.afterImages,
   }));
 
+  const p0 = formattedProperties[0];
+  const p1 = formattedProperties[1];
+  const p2 = formattedProperties[2];
+
   return (
-    <div className="flex flex-col">
-      <section className="relative overflow-hidden border-b border-border/40">
-        <div className="pointer-events-none absolute inset-0 grain opacity-50" />
-        <div className="pointer-events-none absolute -right-24 top-0 h-[520px] w-[520px] rounded-full bg-primary/[0.06] blur-3xl" />
-        <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-amber-900/[0.04] blur-3xl" />
+    <div className="flex flex-col bg-[var(--bg)]">
+      <HomeHero />
 
-        <div className="container relative mx-auto px-4 py-16 md:px-6 md:py-24 lg:py-28">
-          <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-10">
-            <div className="lg:col-span-6">
-              <p
-                className="animate-fade-up font-display text-xs font-semibold uppercase tracking-[0.28em] text-primary opacity-0"
-                style={{ animationDelay: "0ms" }}
-              >
-                Alquileres · Remodelaciones · Chile
-              </p>
-              <h1
-                className="animate-fade-up mt-5 font-display text-[clamp(2.25rem,5vw,3.75rem)] font-semibold leading-[1.08] tracking-tight text-foreground opacity-0"
-                style={{ animationDelay: "80ms" }}
-              >
-                Espacios pensados para quedarse. O para transformarse.
-              </h1>
-              <p
-                className="animate-fade-up mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground opacity-0"
-                style={{ animationDelay: "160ms" }}
-              >
-                Elegí tu próxima estadía o encargá una remodelación con un equipo
-                que entiende diseño, materiales y plazos.
-              </p>
-              <div
-                className="animate-fade-up mt-10 flex flex-col gap-3 sm:flex-row sm:items-center opacity-0"
-                style={{ animationDelay: "240ms" }}
-              >
-                <Button
-                  asChild
-                  size="lg"
-                  className="h-12 rounded-full px-8 text-base font-medium"
-                >
-                  <Link href="/alquileres">
-                    Ver alojamientos
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="lg"
-                  className="h-12 rounded-full px-6 text-base text-muted-foreground hover:text-foreground"
-                >
-                  <Link href="/remodelaciones">
-                    Remodelaciones
-                    <ArrowUpRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="relative lg:col-span-6">
-              <div className="grid grid-cols-12 gap-3 md:gap-4">
-                <div className="col-span-7 animate-fade-in opacity-0 [animation-delay:320ms] [animation-fill-mode:forwards]">
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border/50">
-                    <Image
-                      src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80"
-                      alt="Interior de alojamiento"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 100vw, 45vw"
-                      priority
-                    />
-                  </div>
-                </div>
-                <div className="col-span-5 flex flex-col justify-end gap-3 md:gap-4">
-                  <div className="animate-fade-in opacity-0 [animation-delay:420ms] [animation-fill-mode:forwards]">
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border/50">
-                      <Image
-                        src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80"
-                        alt="Detalle de cocina"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 40vw, 22vw"
-                      />
-                    </div>
-                  </div>
-                  <div className="hidden animate-fade-in opacity-0 [animation-delay:500ms] [animation-fill-mode:forwards] sm:block">
-                    <div className="relative aspect-[5/4] overflow-hidden rounded-2xl bg-muted shadow-sm ring-1 ring-border/50">
-                      <Image
-                        src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80"
-                        alt="Arquitectura"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 40vw, 22vw"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-b border-border/40 bg-muted/20 py-8">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-              Reservas directas sin comisiones de intermediarios. Mejor relación
-              calidad-precio cuando coordinás con nosotros.
-            </p>
-            <div className="flex items-center gap-1 shrink-0 text-amber-800/90">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className="h-4 w-4 fill-current"
+      {/* Trust bar */}
+      <RevealOnScroll>
+        <section className="border-y border-[var(--brand-border)] bg-[var(--bg-surface)] py-6 md:py-7">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8">
+            <div className="flex flex-col flex-wrap items-center justify-center gap-y-3 text-center sm:flex-row sm:gap-x-6 md:gap-x-10 lg:gap-x-12">
+              <span className="inline-flex items-center gap-2 font-sans text-xs text-[var(--paragraph)]">
+                <Building2
+                  className="h-4 w-4 text-[var(--brand-accent)]"
+                  strokeWidth={1.5}
                   aria-hidden
                 />
-              ))}
-              <span className="ml-2 text-xs font-medium text-muted-foreground">
-                4.9 · experiencias verificadas
+                Airbnb Superhost
+              </span>
+              <span className="hidden font-mono text-[var(--brand-accent)] sm:inline">
+                ·
+              </span>
+              <span className="inline-flex items-center gap-2 font-sans text-xs text-[var(--paragraph)]">
+                <Globe2
+                  className="h-4 w-4 text-[var(--brand-accent)]"
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
+                Booking.com Partner
+              </span>
+              <span className="hidden font-mono text-[var(--brand-accent)] sm:inline">
+                ·
+              </span>
+              <span className="inline-flex items-center gap-2 font-sans text-xs text-[var(--paragraph)]">
+                <Star
+                  className="h-4 w-4 fill-[var(--brand-accent)] text-[var(--brand-accent)]"
+                  aria-hidden
+                />
+                4.9 · Google Reviews
+              </span>
+              <span className="hidden font-mono text-[var(--brand-accent)] sm:inline">
+                ·
+              </span>
+              <span className="font-sans text-xs text-[var(--paragraph)]">
+                120+ Huéspedes satisfechos
               </span>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </RevealOnScroll>
 
-      <section className="py-20 md:py-28">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div className="max-w-2xl">
-              <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-                Alojamientos
-              </h2>
-              <p className="mt-3 text-lg text-muted-foreground">
-                Selección reducida, bien mantenida.
-              </p>
-            </div>
-            <Button
-              asChild
-              variant="outline"
-              className="w-fit rounded-full border-border/80"
-            >
-              <Link href="/alquileres">
-                Ver todas
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {formattedProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
-
-          <div className="mt-16 rounded-2xl border border-border/60 bg-card px-6 py-10 md:px-10 md:py-12">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h3 className="font-display text-xl font-semibold md:text-2xl">
-                  Reservá en directo
-                </h3>
-                <p className="mt-2 max-w-md text-muted-foreground">
-                  Evitá comisiones de plataformas. Consultá disponibilidad y
-                  cerrá con transparencia.
-                </p>
-              </div>
-              <Button asChild size="lg" className="h-12 shrink-0 rounded-full px-8">
-                <Link href="/alquileres">Buscar fechas</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-border/40 bg-muted/15 py-20 md:py-28">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-                Obra reciente
-              </h2>
-              <p className="mt-3 max-w-lg text-lg text-muted-foreground">
-                Antes y después, con foco en durabilidad y estética.
-              </p>
-            </div>
-            <Button
-              asChild
-              variant="outline"
-              className="w-fit rounded-full border-border/80"
-            >
-              <Link href="/remodelaciones">
-                Ver portfolio
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
-            {formattedProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 md:py-28">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-              Por qué Heritage
-            </h2>
-            <p className="mt-3 text-muted-foreground">
-              Tres principios que guían cada proyecto y cada estadía.
-            </p>
-          </div>
-          <div className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
-            {pillars.map((item) => (
-              <div key={item.title} className="text-center md:text-left">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary md:mx-0">
-                  <item.icon className="h-5 w-5" strokeWidth={1.75} />
+      {/* Featured properties */}
+      {p0 && (
+        <section className="px-4 py-16 md:px-6 md:py-24 lg:px-8 lg:py-[120px]">
+          <div className="container mx-auto max-w-[1280px]">
+            <RevealOnScroll>
+              <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--brand-accent)]">
+                    Selección curada
+                  </p>
+                  <h2 className="mt-3 font-display text-[clamp(2rem,4vw,3.25rem)] font-light text-[var(--headline)]">
+                    Nuestras Propiedades
+                  </h2>
                 </div>
-                <h3 className="mt-5 font-display text-lg font-semibold">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {item.text}
-                </p>
+                <Link
+                  href="/alquileres"
+                  className="font-mono text-[11px] uppercase tracking-wide text-[var(--brand-accent)] transition-colors hover:text-[var(--brand-accent-hover)]"
+                >
+                  Ver todas →
+                </Link>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </RevealOnScroll>
 
-      <section className="border-t border-border/40 bg-foreground py-20 text-background md:py-24">
-        <div className="container mx-auto px-4 text-center md:px-6">
-          <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-            ¿Seguimos?
-          </h2>
-          <p className="mx-auto mt-4 max-w-lg text-background/75">
-            Elegí una fecha o contanos tu remodelación. Respondemos con claridad
-            y sin vueltas.
-          </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="h-12 rounded-full px-8 text-base"
-            >
-              <Link href="/alquileres">Alojamientos</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="h-12 rounded-full border-background/30 bg-transparent px-8 text-base text-background hover:bg-background/10 hover:text-background"
-            >
-              <Link href="/remodelaciones#contacto">Cotizar obra</Link>
-            </Button>
+            <div className="mt-12 grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:grid-rows-2 lg:items-stretch">
+              <RevealOnScroll delayMs={0} className="h-full lg:row-span-2">
+                <LandingPropertyCard
+                  property={p0}
+                  variant="large"
+                  featured
+                  className="h-full"
+                />
+              </RevealOnScroll>
+              {p1 && (
+                <RevealOnScroll delayMs={80} className="h-full">
+                  <LandingPropertyCard
+                    property={p1}
+                    variant="small"
+                    className="h-full"
+                  />
+                </RevealOnScroll>
+              )}
+              {p2 && (
+                <RevealOnScroll delayMs={160} className="h-full">
+                  <LandingPropertyCard
+                    property={p2}
+                    variant="small"
+                    className="h-full"
+                  />
+                </RevealOnScroll>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Direct booking banner */}
+      <RevealOnScroll>
+        <section className="relative overflow-hidden bg-[var(--brand-accent)] px-4 py-16 md:px-10 md:py-20 lg:px-16">
+          <div className="pointer-events-none absolute -right-16 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-white/[0.06] blur-2xl" />
+          <div className="pointer-events-none absolute -left-10 bottom-0 h-48 w-48 rounded-full bg-white/[0.05] blur-2xl" />
+          <div className="container relative mx-auto flex max-w-[1200px] flex-col gap-10 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-xl">
+              <h2 className="font-display text-[clamp(2rem,4vw,2.75rem)] font-semibold italic leading-tight text-white">
+                Reservá directo.
+              </h2>
+              <p className="mt-3 font-display text-[clamp(1.5rem,3vw,2rem)] font-light text-white/85">
+                Sin comisiones. Mejor precio garantizado.
+              </p>
+              <p className="mt-4 font-sans text-sm text-white/65">
+                Ahorrate hasta un 15% vs Airbnb y Booking.com
+              </p>
+            </div>
+            <Link
+              href="/alquileres"
+              className="inline-flex w-full shrink-0 items-center justify-center bg-white px-10 py-[18px] font-mono text-[13px] font-medium uppercase tracking-wide text-[var(--brand-accent)] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:w-auto"
+              style={{ borderRadius: 3 }}
+            >
+              Buscar disponibilidad →
+            </Link>
+          </div>
+        </section>
+      </RevealOnScroll>
+
+      {/* Renovations */}
+      {formattedProjects.length > 0 && (
+        <section className="bg-[var(--bg)] px-4 py-16 md:px-6 md:py-24 lg:px-8 lg:py-[120px]">
+          <div className="container mx-auto max-w-[1280px]">
+            <RevealOnScroll>
+              <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--brand-accent)]">
+                    Nuestro trabajo
+                  </p>
+                  <h2 className="mt-3 font-display text-[clamp(2rem,4vw,3.25rem)] font-light text-[var(--headline)]">
+                    Transformamos espacios.
+                  </h2>
+                </div>
+                <Link
+                  href="/remodelaciones"
+                  className="font-mono text-[11px] uppercase tracking-wide text-[var(--brand-accent)]"
+                >
+                  Ver portfolio →
+                </Link>
+              </div>
+            </RevealOnScroll>
+            <div className="mt-12 grid gap-[3px] md:grid-cols-2">
+              {formattedProjects.map((project, i) => (
+                <RevealOnScroll key={project.id} delayMs={i * 100}>
+                  <RenovationShowcaseCard project={project} />
+                </RevealOnScroll>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Why us */}
+      <RevealOnScroll>
+        <section className="bg-[var(--bg-surface)] px-4 py-16 md:px-6 md:py-24 lg:px-8 lg:py-[120px]">
+          <div className="container mx-auto max-w-[1280px]">
+            <div className="grid gap-14 lg:grid-cols-[2fr_3fr] lg:gap-16">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--brand-accent)]">
+                  Por qué Heritage
+                </p>
+                <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.15] text-[var(--headline)]">
+                  Calidad, confianza
+                  <br />y atención.
+                </h2>
+                <p className="mt-6 max-w-md font-sans text-sm leading-relaxed text-[var(--paragraph)]">
+                  Un equipo chileno que combina gestión impecable con sensibilidad
+                  por el detalle — en cada estadía y en cada obra.
+                </p>
+                <div className="mt-10 grid grid-cols-2 gap-8 sm:gap-10">
+                  <div>
+                    <p className="font-display text-[clamp(2.5rem,5vw,3.25rem)] font-light text-[var(--brand-accent)]">
+                      120+
+                    </p>
+                    <p className="mt-1 font-sans text-xs text-[var(--paragraph)]">
+                      Reseñas
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-display text-[clamp(2.5rem,5vw,3.25rem)] font-light text-[var(--brand-accent)]">
+                      4.9★
+                    </p>
+                    <p className="mt-1 font-sans text-xs text-[var(--paragraph)]">
+                      Google
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-display text-[clamp(2.5rem,5vw,3.25rem)] font-light text-[var(--brand-accent)]">
+                      3+
+                    </p>
+                    <p className="mt-1 font-sans text-xs text-[var(--paragraph)]">
+                      Años
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-display text-[clamp(2.5rem,5vw,3.25rem)] font-light text-[var(--brand-accent)]">
+                      {propertyCount || "—"}
+                    </p>
+                    <p className="mt-1 font-sans text-xs text-[var(--paragraph)]">
+                      Propiedades
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <ul className="space-y-0 divide-y divide-[var(--brand-border)]">
+                {whyFeatures.map((item) => (
+                  <li
+                    key={item.n}
+                    className="group py-7 transition-transform duration-300 first:pt-0 hover:translate-x-2"
+                  >
+                    <p className="font-mono text-[11px] text-[var(--brand-accent)]/50">
+                      {item.n}
+                    </p>
+                    <h3 className="mt-2 font-display text-[22px] font-normal text-[var(--headline)]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 font-sans text-[13px] leading-relaxed text-[var(--paragraph)]">
+                      {item.body}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      </RevealOnScroll>
+
+      {/* Final CTA */}
+      <RevealOnScroll>
+        <section
+          className="relative px-4 py-16 text-center md:px-6 md:py-24 lg:px-8 lg:py-[120px]"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, var(--brand-accent-soft) 0%, transparent 65%), var(--bg)",
+          }}
+        >
+          <div className="container relative mx-auto max-w-[900px]">
+            <h2 className="font-display text-[clamp(2.25rem,5vw,3.6rem)] font-light italic leading-tight text-[var(--headline)]">
+              ¿Listo para tu próxima aventura?
+            </h2>
+            <p className="mx-auto mt-5 max-w-lg font-sans text-[15px] text-[var(--paragraph)]">
+              Elegí fechas o contanos tu remodelación. Respondemos con claridad y
+              sin vueltas.
+            </p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
+              <Link
+                href="/alquileres"
+                className="inline-flex min-w-[200px] items-center justify-center bg-[var(--brand-accent)] px-8 py-3.5 font-mono text-xs uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:bg-[var(--brand-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]/45"
+                style={{ borderRadius: 3 }}
+              >
+                Buscar alojamiento
+              </Link>
+              <Link
+                href="/remodelaciones#contacto"
+                className="inline-flex min-w-[200px] items-center justify-center border border-[var(--brand-accent)] px-8 py-3.5 font-mono text-xs uppercase tracking-wide text-[var(--brand-accent)] transition-all hover:bg-[var(--brand-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]/40"
+                style={{ borderRadius: 3 }}
+              >
+                Solicitar cotización
+              </Link>
+            </div>
+          </div>
+        </section>
+      </RevealOnScroll>
     </div>
   );
 }

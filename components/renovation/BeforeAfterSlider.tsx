@@ -9,6 +9,8 @@ interface BeforeAfterSliderProps {
   afterImage: string;
   beforeLabel?: string;
   afterLabel?: string;
+  /** Override root layout (e.g. full-height cards on landing) */
+  className?: string;
 }
 
 export function BeforeAfterSlider({
@@ -16,6 +18,7 @@ export function BeforeAfterSlider({
   afterImage,
   beforeLabel = "Antes",
   afterLabel = "Después",
+  className,
 }: BeforeAfterSliderProps) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,7 +59,10 @@ export function BeforeAfterSlider({
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-[4/3] overflow-hidden rounded-lg select-none cursor-ew-resize"
+      className={
+        className ??
+        "relative w-full aspect-[4/3] overflow-hidden rounded-lg select-none cursor-ew-resize"
+      }
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
     >
