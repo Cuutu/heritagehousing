@@ -28,9 +28,9 @@ export function Footer() {
           <div className="lg:col-span-4">
             <Link
               href="/"
-              className="font-display text-2xl font-normal uppercase tracking-[0.2em] text-white"
+              className="font-display text-2xl font-normal uppercase tracking-[0.14em] text-white"
             >
-              Heritage
+              Heritage Housing
             </Link>
             <p className="mt-4 max-w-sm font-sans text-[13px] leading-relaxed text-white/50">
               Alojamientos seleccionados y remodelaciones con criterio de diseño.

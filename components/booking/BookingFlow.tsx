@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { format, differenceInDays } from "date-fns";
+import {
+  format,
+  differenceInDays,
+  isAfter,
+  isBefore,
+  isSameDay,
+  startOfDay,
+} from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,8 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { formatCLP } from "@/lib/utils";
+import { cn, formatCLP } from "@/lib/utils";
 
 interface BookingFlowProps {
   property: {
@@ -31,30 +37,75 @@ interface BookingFlowProps {
     pricePerNight: unknown;
     maxGuests: number;
   };
+  mode?: "select-dates" | "complete";
+  initialCheckInIso?: string;
+  initialCheckOutIso?: string;
+  initialGuests?: number;
 }
 
-type Step = 1 | 2 | 3;
+type CheckoutStep = 2 | 3;
 
-export function BookingFlow({ property }: BookingFlowProps) {
+export function BookingFlow({
+  property,
+  mode = "select-dates",
+  initialCheckInIso,
+  initialCheckOutIso,
+  initialGuests = 1,
+}: BookingFlowProps) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(1);
+  const isComplete = mode === "complete";
+
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>(2);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [checkIn, setCheckIn] = useState<Date | undefined>();
-  const [checkOut, setCheckOut] = useState<Date | undefined>();
-  const [guestCount, setGuestCount] = useState(1);
+  const [checkIn, setCheckIn] = useState<Date | undefined>(() =>
+    isComplete && initialCheckInIso ? new Date(initialCheckInIso) : undefined
+  );
+  const [checkOut, setCheckOut] = useState<Date | undefined>(() =>
+    isComplete && initialCheckOutIso ? new Date(initialCheckOutIso) : undefined
+  );
+  const [guestCount, setGuestCount] = useState(
+    isComplete ? initialGuests : 1
+  );
 
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+
+  const [blockedDates, setBlockedDates] = useState<Date[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/reservations/check?propertyId=${encodeURIComponent(property.id)}`
+        );
+        if (!res.ok) return;
+        const data: { blockedDates: string[] } = await res.json();
+        if (cancelled) return;
+        setBlockedDates(
+          (data.blockedDates ?? []).map((iso) => startOfDay(new Date(iso)))
+        );
+      } catch {
+        /* sin bloqueos si falla */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [property.id]);
+
+  const isDayBlocked = (date: Date) =>
+    blockedDates.some((b) => isSameDay(b, date));
 
   const nights =
     checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0;
   const totalPrice =
     nights > 0 ? Number(property.pricePerNight) * nights : 0;
 
-  const handleStep1Next = () => {
+  const handleSelectDatesContinue = () => {
     if (!checkIn || !checkOut) {
       setError("Por favor seleccioná fechas de check-in y check-out");
       return;
@@ -64,10 +115,16 @@ export function BookingFlow({ property }: BookingFlowProps) {
       return;
     }
     setError(null);
-    setStep(2);
+    const params = new URLSearchParams({
+      propertyId: property.id,
+      checkIn: checkIn.toISOString(),
+      checkOut: checkOut.toISOString(),
+      guests: String(guestCount),
+    });
+    router.push(`/checkout?${params.toString()}`);
   };
 
-  const handleStep2Next = () => {
+  const handleGuestNext = () => {
     if (!guestName || !guestEmail) {
       setError("Por favor completá todos los campos obligatorios");
       return;
@@ -77,7 +134,7 @@ export function BookingFlow({ property }: BookingFlowProps) {
       return;
     }
     setError(null);
-    setStep(3);
+    setCheckoutStep(3);
   };
 
   const handleCheckout = async () => {
@@ -114,21 +171,11 @@ export function BookingFlow({ property }: BookingFlowProps) {
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex gap-2 mb-4">
-        {[1, 2, 3].map((s) => (
-          <div
-            key={s}
-            className={cn(
-              "flex-1 h-1 rounded-full",
-              s <= step ? "bg-primary" : "bg-muted"
-            )}
-          />
-        ))}
-      </div>
+  const today = startOfDay(new Date());
 
-      {step === 1 && (
+  if (!isComplete) {
+    return (
+      <div className="space-y-6">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -137,6 +184,7 @@ export function BookingFlow({ property }: BookingFlowProps) {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    type="button"
                     className={cn(
                       "w-full justify-start text-left",
                       !checkIn && "text-muted-foreground"
@@ -157,7 +205,9 @@ export function BookingFlow({ property }: BookingFlowProps) {
                         setCheckOut(undefined);
                       }
                     }}
-                    disabled={(date) => date < new Date()}
+                    disabled={(date) =>
+                      isBefore(startOfDay(date), today) || isDayBlocked(date)
+                    }
                     locale={es}
                   />
                 </PopoverContent>
@@ -170,6 +220,7 @@ export function BookingFlow({ property }: BookingFlowProps) {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    type="button"
                     className={cn(
                       "w-full justify-start text-left",
                       !checkOut && "text-muted-foreground"
@@ -185,7 +236,14 @@ export function BookingFlow({ property }: BookingFlowProps) {
                     mode="single"
                     selected={checkOut}
                     onSelect={setCheckOut}
-                    disabled={(date) => !checkIn || date <= checkIn}
+                    disabled={(date) => {
+                      if (!checkIn) return true;
+                      const d = startOfDay(date);
+                      const ci = startOfDay(checkIn);
+                      return (
+                        !isAfter(d, ci) || isDayBlocked(date)
+                      );
+                    }}
                     locale={es}
                   />
                 </PopoverContent>
@@ -197,7 +255,7 @@ export function BookingFlow({ property }: BookingFlowProps) {
             <Label>Huéspedes</Label>
             <Select
               value={guestCount.toString()}
-              onValueChange={(v) => setGuestCount(parseInt(v))}
+              onValueChange={(v) => setGuestCount(parseInt(v, 10))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -215,8 +273,8 @@ export function BookingFlow({ property }: BookingFlowProps) {
           </div>
 
           {nights > 0 && (
-            <div className="p-4 bg-muted rounded-lg">
-              <div className="flex justify-between text-sm mb-2">
+            <div className="rounded-lg bg-muted p-4">
+              <div className="mb-2 flex justify-between text-sm">
                 <span>
                   {formatCLP(Number(property.pricePerNight))} x {nights}{" "}
                   noches
@@ -230,9 +288,39 @@ export function BookingFlow({ property }: BookingFlowProps) {
             </div>
           )}
         </div>
-      )}
 
-      {step === 2 && (
+        {error && (
+          <p className="rounded bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="button"
+          className="w-full"
+          onClick={handleSelectDatesContinue}
+        >
+          Continuar
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="mb-4 flex gap-2">
+        {[2, 3].map((s) => (
+          <div
+            key={s}
+            className={cn(
+              "h-1 flex-1 rounded-full",
+              checkoutStep >= s ? "bg-primary" : "bg-muted"
+            )}
+          />
+        ))}
+      </div>
+
+      {checkoutStep === 2 && (
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="guestName">Nombre completo *</Label>
@@ -266,8 +354,8 @@ export function BookingFlow({ property }: BookingFlowProps) {
             />
           </div>
 
-          <div className="p-4 bg-muted rounded-lg text-sm">
-            <div className="flex justify-between mb-2">
+          <div className="rounded-lg bg-muted p-4 text-sm">
+            <div className="mb-2 flex justify-between">
               <span>
                 {checkIn && format(checkIn, "dd/MM")} -{" "}
                 {checkOut && format(checkOut, "dd/MM/yyyy")}
@@ -282,18 +370,18 @@ export function BookingFlow({ property }: BookingFlowProps) {
         </div>
       )}
 
-      {step === 3 && (
+      {checkoutStep === 3 && (
         <div className="space-y-4">
-          <div className="text-center py-4">
-            <CheckCircle2 className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Confirmá tu reserva</h3>
+          <div className="py-4 text-center">
+            <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-primary" />
+            <h3 className="mb-2 text-lg font-semibold">Confirmá tu reserva</h3>
             <p className="text-sm text-muted-foreground">
               Estás a punto de ser redirigido a Stripe para completar el pago
               seguro.
             </p>
           </div>
 
-          <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
+          <div className="space-y-2 rounded-lg bg-muted p-4 text-sm">
             <div className="flex justify-between">
               <span>Propiedad</span>
               <span className="font-medium">{property.name}</span>
@@ -309,7 +397,7 @@ export function BookingFlow({ property }: BookingFlowProps) {
               <span>Huéspedes</span>
               <span>{guestCount}</span>
             </div>
-            <div className="flex justify-between font-semibold pt-2 border-t">
+            <div className="flex justify-between border-t pt-2 font-semibold">
               <span>Total a pagar</span>
               <span>{formatCLP(totalPrice)}</span>
             </div>
@@ -318,36 +406,32 @@ export function BookingFlow({ property }: BookingFlowProps) {
       )}
 
       {error && (
-        <p className="text-sm text-destructive bg-destructive/10 p-3 rounded">
+        <p className="rounded bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </p>
       )}
 
       <div className="flex gap-2">
-        {step > 1 && (
+        {checkoutStep === 3 && (
           <Button
             variant="outline"
-            onClick={() => setStep((s) => (s - 1) as Step)}
+            type="button"
+            onClick={() => setCheckoutStep(2)}
             disabled={isLoading}
           >
             Volver
           </Button>
         )}
 
-        {step === 1 && (
-          <Button className="flex-1" onClick={handleStep1Next}>
-            Continuar
-          </Button>
-        )}
-
-        {step === 2 && (
-          <Button className="flex-1" onClick={handleStep2Next}>
+        {checkoutStep === 2 && (
+          <Button type="button" className="flex-1" onClick={handleGuestNext}>
             Revisar Reserva
           </Button>
         )}
 
-        {step === 3 && (
+        {checkoutStep === 3 && (
           <Button
+            type="button"
             className="flex-1"
             onClick={handleCheckout}
             disabled={isLoading}

@@ -18,7 +18,6 @@ import { AvailabilityCalendar } from "@/components/calendar/AvailabilityCalendar
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { formatCLP } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
-import { getUnavailableDates } from "@/lib/services/availability.service";
 
 export default async function PropertyDetailPage({
   params,
@@ -33,8 +32,6 @@ export default async function PropertyDetailPage({
     notFound();
   }
 
-  const unavailableDates = await getUnavailableDates(property.id);
-
   const propertyData = {
     id: property.id,
     name: property.name,
@@ -47,7 +44,6 @@ export default async function PropertyDetailPage({
     bathrooms: property.bathrooms,
     images: property.images,
     amenities: property.amenities.map((a) => ({ key: a.toLowerCase(), label: a })),
-    blockedDates: unavailableDates,
   };
 
   return (
@@ -133,10 +129,7 @@ export default async function PropertyDetailPage({
             <h2 className="mb-4 font-display text-2xl font-semibold tracking-tight">
               Disponibilidad
             </h2>
-            <AvailabilityCalendar
-              propertyId={propertyData.id}
-              blockedDates={propertyData.blockedDates}
-            />
+            <AvailabilityCalendar propertyId={propertyData.id} />
             <div className="flex gap-4 mt-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-muted rounded" />

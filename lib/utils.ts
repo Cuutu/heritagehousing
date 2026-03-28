@@ -6,12 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCLP(amount: number): string {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return `CLP $${amount.toLocaleString("es-CL")}`;
 }
 
 export function formatDate(date: Date | string): string {

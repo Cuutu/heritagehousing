@@ -12,7 +12,7 @@ const navigation = [
   { name: "Remodelaciones", href: "/remodelaciones" },
 ];
 
-export function Navbar() {
+export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -43,9 +43,9 @@ export function Navbar() {
       <nav className="container mx-auto flex h-[4.25rem] items-center justify-between px-4 md:px-6 lg:px-8">
         <Link
           href="/"
-          className="font-display text-base font-normal uppercase tracking-[0.2em] text-[var(--headline)] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]/40"
+          className="font-display text-[0.95rem] font-normal uppercase tracking-[0.14em] text-[var(--headline)] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]/40"
         >
-          Heritage
+          Heritage Housing
         </Link>
 
         <div className="hidden items-center gap-10 md:flex">
@@ -70,13 +70,13 @@ export function Navbar() {
             href="/alquileres"
             className="font-sans text-xs uppercase tracking-[0.06em] text-[var(--paragraph)] transition-colors hover:text-[var(--headline)]"
           >
-            Explorar
+            Ver Propiedades
           </Link>
           <Link
             href="/alquileres"
             className="rounded-full bg-[var(--brand-accent)] px-5 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-white shadow-sm transition-all hover:-translate-y-px hover:bg-[var(--brand-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)]/50 active:translate-y-0"
           >
-            Reservar
+            Reservar Ahora
           </Link>
         </div>
 
@@ -115,7 +115,7 @@ export function Navbar() {
               className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-accent)] py-3.5 font-mono text-xs font-medium uppercase tracking-wider text-white"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Reservar
+              Reservar Ahora
             </Link>
           </div>
         </div>
