@@ -84,3 +84,93 @@
     }
   }
 }
+
+/* Mapa /alquileres — pins estilo Airbnb (precio en burbuja) */
+@layer components {
+  .rentals-map-marker-root.leaflet-div-icon {
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .rentals-map-pin-wrap {
+    width: 88px;
+    height: 44px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    pointer-events: auto;
+  }
+
+  .rentals-map-price-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.25rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.06),
+      0 1px 2px rgba(0, 0, 0, 0.1),
+      0 4px 14px rgba(0, 0, 0, 0.1);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #222;
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .rentals-map-price-pill:hover {
+    transform: scale(1.06);
+    z-index: 1000 !important;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.16);
+  }
+
+  .rentals-map-price-pill--selected {
+    background: var(--brand-accent);
+    color: #fff;
+    box-shadow:
+      0 0 0 1px rgba(181, 69, 27, 0.35),
+      0 2px 12px rgba(181, 69, 27, 0.35);
+  }
+
+  .rentals-map-price-pill::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 6px 5px 0 5px;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+  }
+
+  .rentals-map-price-pill--selected::after {
+    border-top-color: var(--brand-accent);
+  }
+
+  .leaflet-container.rentals-map-container {
+    background: #ebe8e2;
+  }
+
+  .rentals-map-popup .leaflet-popup-content-wrapper {
+    border-radius: 14px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+
+  .rentals-map-popup .leaflet-popup-content {
+    margin: 0;
+    overflow: hidden;
+  }
+}

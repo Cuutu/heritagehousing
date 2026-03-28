@@ -55,6 +55,8 @@ export default async function RentalsPage() {
       mapAddress: p.mapAddress,
       latitude: p.latitude as number,
       longitude: p.longitude as number,
+      pricePerNight: p.pricePerNight,
+      imageUrl: p.images[0] ?? null,
     }));
 
   const withoutCoords = formattedProperties.filter(
@@ -105,7 +107,8 @@ export default async function RentalsPage() {
                       Ubicaciones
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Hacé clic en un marcador para ver la ficha.
+                      Precio por noche en cada pin — clic para ver detalle y
+                      reservar.
                     </p>
                   </div>
                 </div>
@@ -119,6 +122,15 @@ export default async function RentalsPage() {
                     rel="noreferrer"
                   >
                     OpenStreetMap
+                  </a>{" "}
+                  · ©{" "}
+                  <a
+                    className="underline underline-offset-2 hover:text-foreground"
+                    href="https://carto.com/attributions"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    CARTO
                   </a>
                 </p>
               </section>

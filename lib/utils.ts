@@ -9,6 +9,11 @@ export function formatCLP(amount: number): string {
   return `CLP $${amount.toLocaleString("es-CL")}`;
 }
 
+/** Precio compacto para pins del mapa (estilo Airbnb) */
+export function formatPriceMapPin(amount: number): string {
+  return `$${amount.toLocaleString("es-CL")}`;
+}
+
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("es-CL", {

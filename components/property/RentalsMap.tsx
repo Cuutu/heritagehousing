@@ -7,7 +7,7 @@ const Inner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[min(420px,70vh)] min-h-[320px] w-full animate-pulse items-center justify-center rounded-2xl bg-muted text-sm text-muted-foreground">
+      <div className="flex h-[min(480px,72vh)] min-h-[340px] w-full animate-pulse items-center justify-center rounded-2xl bg-muted text-sm text-muted-foreground">
         Cargando mapa…
       </div>
     ),
@@ -22,6 +22,8 @@ export type RentalsMapMarker = {
   mapAddress: string | null;
   latitude: number;
   longitude: number;
+  pricePerNight: number;
+  imageUrl: string | null;
 };
 
 export function RentalsMap({ markers }: { markers: RentalsMapMarker[] }) {
