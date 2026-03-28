@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Menu,
   X,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const adminNav = [
   { name: "Calendario", href: "/admin/calendario", icon: Calendar },
   { name: "Propiedades", href: "/admin/propiedades", icon: Building2 },
   { name: "Proyectos", href: "/admin/proyectos", icon: Wrench },
+  { name: "Blog", href: "/admin/blog", icon: BookOpen },
 ];
 
 export function AdminChrome({
@@ -41,7 +43,9 @@ export function AdminChrome({
   }, [mobileOpen]);
 
   const navLinkClass = (href: string) => {
-    const isActive = pathname === href;
+    const isActive =
+      pathname === href ||
+      (href !== "/admin" && pathname.startsWith(`${href}/`));
     return cn(
       "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--headline)]",
       isActive

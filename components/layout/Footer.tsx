@@ -5,6 +5,7 @@ const footerLinks = {
   rentals: [
     { name: "Propiedades", href: "/alquileres" },
     { name: "Cómo reservar", href: "/alquileres" },
+    { name: "Blog", href: "/blog" },
   ],
   renovations: [
     { name: "Portfolio", href: "/remodelaciones" },
