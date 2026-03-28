@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, MapPin } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 
 const footerLinks = {
   rentals: [
@@ -12,6 +12,8 @@ const footerLinks = {
     { name: "Cotización", href: "/remodelaciones#contacto" },
   ],
   company: [
+    { name: "Nosotros", href: "/nosotros" },
+    { name: "Contacto", href: "/contacto" },
     { name: "Términos", href: "/terminos" },
     { name: "Privacidad", href: "/privacidad" },
   ],
@@ -81,7 +83,18 @@ export function Footer() {
               <ul className="mt-4 space-y-3 font-sans text-[13px] text-white/55">
                 <li className="flex items-start gap-2">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-accent)]/80" />
-                  Santiago, Chile
+                  <span>
+                    Av. Kennedy #7440, of. 701, Vitacura, Santiago, Chile
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 shrink-0 text-[var(--brand-accent)]/80" />
+                  <a
+                    href="tel:+56966161202"
+                    className="transition-colors hover:text-white"
+                  >
+                    (+56) 9 6616 1202
+                  </a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-[var(--brand-accent)]/80" />
