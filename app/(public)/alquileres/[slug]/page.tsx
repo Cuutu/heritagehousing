@@ -18,6 +18,7 @@ import { AvailabilityCalendar } from "@/components/calendar/AvailabilityCalendar
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { formatCLP } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import { PropertyLocationSection } from "@/components/property/PropertyLocationSection";
 
 export default async function PropertyDetailPage({
   params,
@@ -44,6 +45,10 @@ export default async function PropertyDetailPage({
     bathrooms: property.bathrooms,
     images: property.images,
     amenities: property.amenities.map((a) => ({ key: a.toLowerCase(), label: a })),
+    mapAddress: property.mapAddress,
+    googleMapsLink: property.googleMapsLink,
+    latitude: property.latitude,
+    longitude: property.longitude,
   };
 
   return (
@@ -117,11 +122,14 @@ export default async function PropertyDetailPage({
               </div>
             </TabsContent>
             <TabsContent value="location" className="mt-4">
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground">
-                  {propertyData.location}
-                </p>
-              </div>
+              <PropertyLocationSection
+                name={propertyData.name}
+                location={propertyData.location}
+                mapAddress={propertyData.mapAddress}
+                googleMapsLink={propertyData.googleMapsLink}
+                latitude={propertyData.latitude}
+                longitude={propertyData.longitude}
+              />
             </TabsContent>
           </Tabs>
 

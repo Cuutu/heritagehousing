@@ -48,6 +48,7 @@ import {
   updatePropertyAction,
   togglePropertyActiveAction,
   deletePropertyAction,
+  parseGoogleMapsLinkAction,
 } from "@/app/actions/property.actions";
 import { syncIcalAdminAction } from "@/app/actions/sync.actions";
 import type { Property } from "@prisma/client";
@@ -74,6 +75,7 @@ const emptyForm = {
   description: "",
   location: "",
   mapAddress: "",
+  googleMapsLink: "",
   latitude: "",
   longitude: "",
   pricePerNight: "",
@@ -99,9 +101,31 @@ export function PropertiesAdminClient({
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [parsingMaps, setParsingMaps] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = () => window.location.reload();
+
+  const extractCoordsFromMapsLink = async () => {
+    setParsingMaps(true);
+    setError(null);
+    try {
+      const r = await parseGoogleMapsLinkAction(form.googleMapsLink);
+      if (r.ok) {
+        setForm((f) => ({
+          ...f,
+          latitude: String(r.lat),
+          longitude: String(r.lng),
+        }));
+      } else {
+        setError(r.error);
+      }
+    } catch {
+      setError("No se pudo leer el enlace");
+    } finally {
+      setParsingMaps(false);
+    }
+  };
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -133,6 +157,7 @@ export function PropertiesAdminClient({
       description: form.description,
       location: form.location,
       mapAddress: form.mapAddress.trim() || undefined,
+      googleMapsLink: form.googleMapsLink.trim() || undefined,
       latitude: lat !== null && Number.isFinite(lat) ? lat : null,
       longitude: lng !== null && Number.isFinite(lng) ? lng : null,
       pricePerNight: Number(form.pricePerNight),
@@ -164,6 +189,7 @@ export function PropertiesAdminClient({
       description: p.description,
       location: p.location,
       mapAddress: p.mapAddress ?? "",
+      googleMapsLink: p.googleMapsLink ?? "",
       latitude: p.latitude != null ? String(p.latitude) : "",
       longitude: p.longitude != null ? String(p.longitude) : "",
       pricePerNight: String(p.pricePerNight),
@@ -191,6 +217,7 @@ export function PropertiesAdminClient({
       description: form.description,
       location: form.location,
       mapAddress: form.mapAddress.trim() || undefined,
+      googleMapsLink: form.googleMapsLink.trim() || undefined,
       latitude: lat !== null && Number.isFinite(lat) ? lat : null,
       longitude: lng !== null && Number.isFinite(lng) ? lng : null,
       pricePerNight: Number(form.pricePerNight),
@@ -288,7 +315,36 @@ export function PropertiesAdminClient({
           }
         />
         <p className="text-xs text-muted-foreground">
-          Se muestra en el mapa de /alquileres junto al pin.
+          Se muestra en el mapa de /alquileres junto al pin y en la ficha.
+        </p>
+      </div>
+      <div className="grid gap-2">
+        <Label>Link de Google Maps (recomendado)</Label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <Input
+            placeholder="https://maps.app.goo.gl/... o maps.google.com/..."
+            value={form.googleMapsLink}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, googleMapsLink: e.target.value }))
+            }
+            className="sm:flex-1"
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={parsingMaps || !form.googleMapsLink.trim()}
+            onClick={extractCoordsFromMapsLink}
+          >
+            {parsingMaps ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              "Extraer coordenadas"
+            )}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Pegá el enlace desde <strong>Compartir</strong> en Google Maps. Al
+          guardar también intentamos leer coordenadas automáticamente si faltan.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -314,8 +370,7 @@ export function PropertiesAdminClient({
         </div>
       </div>
       <p className="text-xs text-muted-foreground -mt-2">
-        Copiá lat/lng desde Google Maps (clic derecho en el mapa). Ambas o
-        ninguna.
+        Podés ajustar lat/lng a mano si hace falta. Ambas o ninguna.
       </p>
       <div className="grid grid-cols-3 gap-4">
         <div className="grid gap-2">

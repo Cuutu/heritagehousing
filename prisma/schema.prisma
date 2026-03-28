@@ -30,6 +30,8 @@ model Property {
   location       String
   /// Dirección completa (calle, número) para mostrar en mapa y buscadores
   mapAddress     String?
+  /// Link compartido de Google Maps (place, maps, goo.gl); se usan para extraer coordenadas y "Abrir en Maps"
+  googleMapsLink String?
   latitude       Float?
   longitude      Float?
   pricePerNight  Decimal       @db.Decimal(10, 2)

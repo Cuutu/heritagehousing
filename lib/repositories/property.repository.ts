@@ -112,6 +112,7 @@ export async function createProperty(data: PropertyInput) {
       description: data.description,
       location: data.location,
       mapAddress: data.mapAddress?.trim() || null,
+      googleMapsLink: data.googleMapsLink?.trim() || null,
       latitude: data.latitude ?? null,
       longitude: data.longitude ?? null,
       pricePerNight: data.pricePerNight,
@@ -136,6 +137,10 @@ export async function updateProperty(id: string, data: Partial<PropertyInput>) {
         data.mapAddress === undefined
           ? undefined
           : data.mapAddress?.trim() || null,
+      googleMapsLink:
+        data.googleMapsLink === undefined
+          ? undefined
+          : data.googleMapsLink?.trim() || null,
       latitude: data.latitude === undefined ? undefined : data.latitude ?? null,
       longitude:
         data.longitude === undefined ? undefined : data.longitude ?? null,

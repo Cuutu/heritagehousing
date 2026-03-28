@@ -15,6 +15,10 @@ const propertySchemaBase = z.object({
     .min(50, "Descripción debe tener al menos 50 caracteres"),
   location: z.string().min(3, "Ubicación requerida"),
   mapAddress: z.string().max(500).optional().or(z.literal("")),
+  googleMapsLink: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null ? undefined : val),
+    z.string().url().optional()
+  ),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   pricePerNight: z.coerce.number().positive("Precio debe ser positivo"),

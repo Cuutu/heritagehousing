@@ -11,13 +11,49 @@ import {
   updateProperty as repoUpdate,
   deleteProperty as repoDelete,
 } from "@/lib/repositories/property.repository";
+import { resolveGoogleMapsCoordinates } from "@/lib/maps/parseGoogleMapsUrl";
 import { z } from "zod";
 
 const idSchema = z.string().cuid();
 
+async function mergeCoordsFromGoogleLink(
+  data: Partial<PropertyInput>
+): Promise<Partial<PropertyInput>> {
+  const hasPair =
+    data.latitude != null &&
+    data.longitude != null &&
+    Number.isFinite(data.latitude) &&
+    Number.isFinite(data.longitude);
+  if (hasPair) return data;
+  const link = data.googleMapsLink?.trim();
+  if (!link) return data;
+  const c = await resolveGoogleMapsCoordinates(link);
+  if (!c) return data;
+  return { ...data, latitude: c.lat, longitude: c.lng };
+}
+
+export async function parseGoogleMapsLinkAction(url: string) {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return { ok: false as const, error: "Pegá un enlace de Google Maps" };
+  }
+  const c = await resolveGoogleMapsCoordinates(trimmed);
+  if (!c) {
+    return {
+      ok: false as const,
+      error:
+        "No se pudieron leer coordenadas. Probá con el enlace completo desde “Compartir” en Google Maps, o cargá lat/lng a mano.",
+    };
+  }
+  return { ok: true as const, lat: c.lat, lng: c.lng };
+}
+
 export async function createPropertyAction(raw: unknown) {
   try {
-    const data = propertySchema.parse(raw) as PropertyInput;
+    const parsed = propertySchema.parse(raw) as PropertyInput;
+    const data = (await mergeCoordsFromGoogleLink(
+      parsed
+    )) as PropertyInput;
     await repoCreate({
       ...data,
       airbnbIcalUrl: data.airbnbIcalUrl || undefined,
@@ -38,8 +74,9 @@ export async function createPropertyAction(raw: unknown) {
 export async function updatePropertyAction(id: string, raw: unknown) {
   try {
     idSchema.parse(id);
-    const data = propertyUpdateSchema.parse(raw);
-    await repoUpdate(id, data as Partial<PropertyInput>);
+    let data = propertyUpdateSchema.parse(raw) as Partial<PropertyInput>;
+    data = await mergeCoordsFromGoogleLink(data);
+    await repoUpdate(id, data);
     revalidatePath("/admin/propiedades");
     revalidatePath("/alquileres");
     return { success: true as const };
