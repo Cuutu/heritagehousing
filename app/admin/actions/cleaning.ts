@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sendWhatsAppReminder as sendWhatsAppReminderSvc } from "@/lib/cleaning/cleaning-notifications";
+import {
+  normalizeWhatsAppPhone,
+  whatsappPhoneHint,
+} from "@/lib/phone/whatsapp-phone";
 
 export type SendWhatsAppReminderActionResult =
   | { ok: true }
@@ -26,7 +30,7 @@ export async function sendWhatsAppReminder(
       return {
         ok: false,
         error:
-          "Meta no aceptó el envío. Revisá META_PHONE_NUMBER_ID, META_ACCESS_TOKEN y el número en formato 569…",
+          "Meta no aceptó el envío. Revisá META_PHONE_NUMBER_ID, META_ACCESS_TOKEN y el número (Chile 569… o Argentina 549…).",
       };
     }
     return { ok: true };
@@ -58,25 +62,14 @@ export async function createAssignment(
   revalidatePath("/admin/limpieza");
 }
 
-/** Normaliza a 569XXXXXXXX (WhatsApp Chile, sin +). */
-function normalizeChileWhatsApp(raw: string): string {
-  const d = raw.replace(/\D/g, "");
-  if (d.length === 11 && d.startsWith("569")) return d;
-  if (d.length === 9 && d.startsWith("9")) return `56${d}`;
-  return d;
-}
-
 const staffCreateSchema = z.object({
   name: z.string().trim().min(2, "Nombre muy corto").max(120),
   phone: z
     .string()
     .trim()
     .min(8, "Ingresá el teléfono")
-    .transform((s) => normalizeChileWhatsApp(s))
-    .refine(
-      (s) => /^569[0-9]{8}$/.test(s),
-      "Móvil Chile: ej. +56 9 1234 5678 o 912345678"
-    ),
+    .transform((s) => normalizeWhatsAppPhone(s))
+    .refine((s): s is string => s !== null, { message: whatsappPhoneHint() }),
 });
 
 export type CleaningStaffActionResult =

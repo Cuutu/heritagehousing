@@ -292,8 +292,8 @@ export function CleaningDashboard({
           </summary>
           <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-gray-600">
             <li>
-              Alta: nombre y número de WhatsApp (Chile: 9 + 8 dígitos; se
-              guarda como 569… para Meta).
+              Alta: nombre y WhatsApp (Chile 569… o Argentina 549…; se guarda
+              sin + para Meta).
             </li>
             <li>
               Asignación: en <strong>Sin asignar</strong>, elegí persona por
@@ -324,9 +324,12 @@ export function CleaningDashboard({
             <DialogHeader>
               <DialogTitle>Agregar personal de limpieza</DialogTitle>
               <DialogDescription>
-                El número se usa para WhatsApp. Formato Chile:{" "}
-                <code className="rounded bg-muted px-1">912345678</code> o{" "}
+                El número se usa para WhatsApp. Chile:{" "}
+                <code className="rounded bg-muted px-1">912345678</code> /{" "}
                 <code className="rounded bg-muted px-1">56912345678</code>.
+                Argentina:{" "}
+                <code className="rounded bg-muted px-1">9112345678</code> o{" "}
+                <code className="rounded bg-muted px-1">5491112345678</code>.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">
