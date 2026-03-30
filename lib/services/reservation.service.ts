@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { calculateTotalPrice } from "@/lib/services/availability.service";
 import { sendBookingConfirmation } from "@/lib/services/email.service";
-import { PaymentStatus as PS } from "@prisma/client";
+import {
+  PaymentStatus as PS,
+  ReservationLifecycleStatus,
+} from "@prisma/client";
 
 interface ReservationData {
   propertyId: string;
@@ -36,6 +39,7 @@ export async function createNewReservation(
       totalPrice,
       source: "DIRECT",
       paymentStatus: PS.PENDING,
+      lifecycleStatus: ReservationLifecycleStatus.PENDING,
       stripeId: stripeSessionId ?? null,
       notes: data.notes,
     },
@@ -67,7 +71,11 @@ export async function markReservationPaidFromStripe(
 
   const reservation = await prisma.reservation.update({
     where: { id: reservationId },
-    data: { paymentStatus: PS.PAID, stripeId: stripeSessionId },
+    data: {
+      paymentStatus: PS.PAID,
+      stripeId: stripeSessionId,
+      lifecycleStatus: ReservationLifecycleStatus.CONFIRMED,
+    },
     include: { property: true },
   });
 
@@ -79,7 +87,10 @@ export async function markReservationPaidFromStripe(
 export async function cancelReservation(reservationId: string) {
   return prisma.reservation.update({
     where: { id: reservationId },
-    data: { paymentStatus: PS.CANCELLED },
+    data: {
+      paymentStatus: PS.CANCELLED,
+      lifecycleStatus: ReservationLifecycleStatus.CANCELLED,
+    },
   });
 }
 

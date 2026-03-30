@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generateSlug } from "@/lib/utils";
+import { savePostImages } from "@/app/admin/actions/images";
+import { ImageUploader, type ImageItem } from "@/components/admin/ImageUploader";
 import "@uiw/react-md-editor/markdown-editor.css";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
@@ -34,6 +36,7 @@ export type PostEditorInitial = {
 type PostEditorProps = {
   mode: "create" | "edit";
   initial?: PostEditorInitial;
+  initialGallery?: ImageItem[];
 };
 
 function tagsToInput(tags: string[]) {
@@ -48,7 +51,7 @@ function parseTagsInput(raw: string): string[] {
     .slice(0, 5);
 }
 
-export function PostEditor({ mode, initial }: PostEditorProps) {
+export function PostEditor({ mode, initial, initialGallery = [] }: PostEditorProps) {
   const router = useRouter();
   const slugTouched = useRef(mode === "edit");
 
@@ -65,6 +68,7 @@ export function PostEditor({ mode, initial }: PostEditorProps) {
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [postGallery, setPostGallery] = useState<ImageItem[]>(initialGallery);
 
   const onTitleBlur = useCallback(() => {
     if (slugTouched.current) return;
@@ -83,11 +87,14 @@ export function PostEditor({ mode, initial }: PostEditorProps) {
     setError(null);
 
     const tags = parseTagsInput(tagsInput);
+    const coverFromGallery = postGallery[0]?.url;
     const payload = {
       title,
       excerpt,
       content,
-      coverImage: coverImage.trim() || undefined,
+      coverImage:
+        coverFromGallery ??
+        (coverImage.trim() || undefined),
       author: author.trim() || "Heritage Housing",
       tags,
       ...(slug.trim() ? { slug: slug.trim() } : {}),
@@ -104,9 +111,17 @@ export function PostEditor({ mode, initial }: PostEditorProps) {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { id?: string; error?: string };
       if (!res.ok) {
         throw new Error(data.error || "Error al guardar");
+      }
+
+      const postId = mode === "create" ? data.id : initial?.id;
+      if (postId && postGallery.length > 0) {
+        await savePostImages(
+          postId,
+          postGallery.map((img, i) => ({ url: img.url, order: i }))
+        );
       }
 
       router.push("/admin/blog");
@@ -159,14 +174,27 @@ export function PostEditor({ mode, initial }: PostEditorProps) {
             rows={3}
           />
         </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label>Galería del artículo</Label>
+          <ImageUploader
+            endpoint="blogImages"
+            initialImages={postGallery}
+            onChange={setPostGallery}
+          />
+          <p className="text-xs text-muted-foreground">
+            La primera imagen es la portada. Si no subís fotos, podés usar solo
+            la URL abajo.
+          </p>
+        </div>
         <div className="space-y-2">
-          <Label htmlFor="coverImage">Imagen de portada (URL)</Label>
+          <Label htmlFor="coverImage">Portada por URL (si no hay galería)</Label>
           <Input
             id="coverImage"
             type="url"
             value={coverImage}
             onChange={(e) => setCoverImage(e.target.value)}
             placeholder="https://..."
+            disabled={postGallery.length > 0}
           />
         </div>
         <div className="space-y-2">

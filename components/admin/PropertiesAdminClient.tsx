@@ -51,16 +51,14 @@ import {
   parseGoogleMapsLinkAction,
 } from "@/app/actions/property.actions";
 import { syncIcalAdminAction } from "@/app/actions/sync.actions";
-import type { Property } from "@prisma/client";
+import { savePropertyImages } from "@/app/admin/actions/images";
+import { ImageUploader, type ImageItem } from "@/components/admin/ImageUploader";
+import type { Property, PropertyImage } from "@prisma/client";
 
-type Row = Omit<Property, "pricePerNight"> & { pricePerNight: number };
-
-function parseImages(text: string): string[] {
-  return text
-    .split(/\n|,/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+type Row = Omit<Property, "pricePerNight"> & {
+  pricePerNight: number;
+  propertyImages: PropertyImage[];
+};
 
 function parseAmenities(text: string): string[] {
   return text
@@ -82,7 +80,6 @@ const emptyForm = {
   maxGuests: "4",
   bedrooms: "1",
   bathrooms: "1",
-  imagesText: "",
   amenitiesText: "",
   airbnbIcalUrl: "",
   bookingIcalUrl: "",
@@ -103,6 +100,7 @@ export function PropertiesAdminClient({
   const [loading, setLoading] = useState(false);
   const [parsingMaps, setParsingMaps] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [propertyGallery, setPropertyGallery] = useState<ImageItem[]>([]);
 
   const refresh = () => window.location.reload();
 
@@ -147,6 +145,11 @@ export function PropertiesAdminClient({
   const submitCreate = async () => {
     setLoading(true);
     setError(null);
+    if (propertyGallery.length < 1) {
+      setError("Subí al menos una imagen.");
+      setLoading(false);
+      return;
+    }
     const lat =
       form.latitude.trim() === "" ? null : Number(form.latitude);
     const lng =
@@ -164,7 +167,7 @@ export function PropertiesAdminClient({
       maxGuests: Number(form.maxGuests),
       bedrooms: Number(form.bedrooms),
       bathrooms: Number(form.bathrooms),
-      images: parseImages(form.imagesText),
+      images: propertyGallery.map((g) => g.url),
       amenities: parseAmenities(form.amenitiesText),
       airbnbIcalUrl: form.airbnbIcalUrl || undefined,
       bookingIcalUrl: form.bookingIcalUrl || undefined,
@@ -172,9 +175,19 @@ export function PropertiesAdminClient({
     };
     const r = await createPropertyAction(payload);
     setLoading(false);
-    if (r.success) {
+    if (r.success && "id" in r && r.id) {
+      await savePropertyImages(
+        r.id,
+        propertyGallery.map((img, i) => ({ url: img.url, order: i }))
+      );
       setIsCreating(false);
       setForm(emptyForm);
+      setPropertyGallery([]);
+      refresh();
+    } else if (r.success) {
+      setIsCreating(false);
+      setForm(emptyForm);
+      setPropertyGallery([]);
       refresh();
     } else {
       setError(r.error ?? "Error");
@@ -196,17 +209,26 @@ export function PropertiesAdminClient({
       maxGuests: String(p.maxGuests),
       bedrooms: String(p.bedrooms),
       bathrooms: String(p.bathrooms),
-      imagesText: p.images.join("\n"),
       amenitiesText: p.amenities.join(", "),
       airbnbIcalUrl: p.airbnbIcalUrl ?? "",
       bookingIcalUrl: p.bookingIcalUrl ?? "",
     });
+    setPropertyGallery(
+      p.propertyImages.length > 0
+        ? p.propertyImages.map((img) => ({ url: img.url, order: img.order }))
+        : p.images.map((url, i) => ({ url, order: i }))
+    );
   };
 
   const submitEdit = async () => {
     if (!editId) return;
     setLoading(true);
     setError(null);
+    if (propertyGallery.length < 1) {
+      setError("Debe haber al menos una imagen.");
+      setLoading(false);
+      return;
+    }
     const lat =
       form.latitude.trim() === "" ? null : Number(form.latitude);
     const lng =
@@ -224,7 +246,7 @@ export function PropertiesAdminClient({
       maxGuests: Number(form.maxGuests),
       bedrooms: Number(form.bedrooms),
       bathrooms: Number(form.bathrooms),
-      images: parseImages(form.imagesText),
+      images: propertyGallery.map((g) => g.url),
       amenities: parseAmenities(form.amenitiesText),
       airbnbIcalUrl: form.airbnbIcalUrl || "",
       bookingIcalUrl: form.bookingIcalUrl || "",
@@ -232,6 +254,10 @@ export function PropertiesAdminClient({
     const r = await updatePropertyAction(editId, payload);
     setLoading(false);
     if (r.success) {
+      await savePropertyImages(
+        editId,
+        propertyGallery.map((img, i) => ({ url: img.url, order: i }))
+      );
       setEditId(null);
       refresh();
     } else {
@@ -405,13 +431,11 @@ export function PropertiesAdminClient({
         </div>
       </div>
       <div className="grid gap-2">
-        <Label>Imágenes (una URL por línea)</Label>
-        <Textarea
-          rows={3}
-          value={form.imagesText}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, imagesText: e.target.value }))
-          }
+        <Label>Imágenes</Label>
+        <ImageUploader
+          endpoint="propertyImages"
+          initialImages={propertyGallery}
+          onChange={setPropertyGallery}
         />
       </div>
       <div className="grid gap-2">
@@ -464,7 +488,13 @@ export function PropertiesAdminClient({
               />
               Sincronizar iCal
             </Button>
-            <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <Dialog
+              open={isCreating}
+              onOpenChange={(open) => {
+                setIsCreating(open);
+                if (open) setPropertyGallery([]);
+              }}
+            >
               <DialogTrigger asChild>
                 <Button className="bg-[var(--headline)] text-white hover:bg-[var(--headline)]/90">
                   <Plus className="mr-2 h-4 w-4" />

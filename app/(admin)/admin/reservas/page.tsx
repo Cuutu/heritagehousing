@@ -1,40 +1,40 @@
 import { prisma } from "@/lib/prisma";
-import { getAllProperties } from "@/lib/repositories/property.repository";
-import { ReservationsAdminClient } from "@/components/admin/ReservationsAdminClient";
+import { ReservationsTable } from "@/components/admin/ReservationsTable";
 
 export default async function AdminReservationsPage() {
-  const [reservations, properties] = await Promise.all([
-    prisma.reservation.findMany({
-      include: { property: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 2000,
-    }),
-    getAllProperties(),
-  ]);
+  const reservations = await prisma.reservation.findMany({
+    include: {
+      property: { select: { name: true } },
+    },
+    orderBy: { checkIn: "asc" },
+    take: 2000,
+  });
 
   const rows = reservations.map((r) => ({
     id: r.id,
-    propertyId: r.propertyId,
     guestName: r.guestName,
     guestEmail: r.guestEmail,
-    propertyName: r.property.name,
+    guestPhone: r.guestPhone,
     checkIn: r.checkIn.toISOString(),
     checkOut: r.checkOut.toISOString(),
     totalPrice: Number(r.totalPrice),
     source: r.source,
+    lifecycleStatus: r.lifecycleStatus,
     paymentStatus: r.paymentStatus,
+    notes: r.notes,
     createdAt: r.createdAt.toISOString(),
-  }));
-
-  const propertyOptions = properties.map((p) => ({
-    id: p.id,
-    name: p.name,
+    property: r.property,
   }));
 
   return (
-    <ReservationsAdminClient
-      reservations={rows}
-      properties={propertyOptions}
-    />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Reservas</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Airbnb · Booking.com · Directas — fuente única de verdad
+        </p>
+      </div>
+      <ReservationsTable reservations={rows} />
+    </div>
   );
 }

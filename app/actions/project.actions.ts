@@ -10,10 +10,10 @@ const idSchema = z.string().cuid();
 export async function createProjectAction(raw: unknown) {
   try {
     const data = projectSchema.parse(raw);
-    await prisma.project.create({ data });
+    const created = await prisma.project.create({ data });
     revalidatePath("/admin/proyectos");
     revalidatePath("/remodelaciones");
-    return { success: true as const };
+    return { success: true as const, id: created.id };
   } catch (e) {
     if (e instanceof z.ZodError) {
       return { success: false as const, error: "Validación fallida", issues: e.errors };

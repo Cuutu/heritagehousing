@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   PaymentStatus,
+  ReservationLifecycleStatus,
   ReservationSource,
 } from "@prisma/client";
 
@@ -78,6 +79,7 @@ export async function createReservation(data: {
       totalPrice: data.totalPrice,
       source: "DIRECT",
       paymentStatus: PaymentStatus.PENDING,
+      lifecycleStatus: ReservationLifecycleStatus.PENDING,
       stripeId: data.stripeId,
       notes: data.notes,
     },

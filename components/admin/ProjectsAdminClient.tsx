@@ -54,13 +54,15 @@ import {
   toggleProjectActiveAction,
   deleteProjectAction,
 } from "@/app/actions/project.actions";
+import { saveProjectImages } from "@/app/admin/actions/images";
+import { ImageUploader, type ImageItem } from "@/components/admin/ImageUploader";
 import {
   projectCategories,
   type ProjectInput,
 } from "@/lib/validations/project.schema";
-import type { Project } from "@prisma/client";
+import type { Project, ProjectImage } from "@prisma/client";
 
-type Row = Project;
+type Row = Project & { projectImages: ProjectImage[] };
 
 const categoryLabels: Record<string, string> = Object.fromEntries(
   projectCategories.map((c) => [c.value, c.label])
@@ -82,8 +84,8 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
     area: "",
     duration: "",
     beforeText: "",
-    afterText: "",
   });
+  const [projectGallery, setProjectGallery] = useState<ImageItem[]>([]);
 
   const refresh = () => window.location.reload();
 
@@ -96,6 +98,18 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
   const submitCreate = async () => {
     setLoading(true);
     setError(null);
+    if (projectGallery.length < 1) {
+      setError("Subí al menos una imagen en la galería (después).");
+      setLoading(false);
+      return;
+    }
+    const beforeImages = parseUrls(form.beforeText);
+    if (beforeImages.length < 1) {
+      setError("Agregá al menos una URL en “antes”.");
+      setLoading(false);
+      return;
+    }
+    const afterImages = projectGallery.map((g) => g.url);
     const payload: ProjectInput = {
       title: form.title,
       slug: form.slug,
@@ -103,14 +117,23 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
       category: form.category as ProjectInput["category"],
       area: form.area ? Number(form.area) : undefined,
       duration: form.duration ? Number(form.duration) : undefined,
-      beforeImages: parseUrls(form.beforeText),
-      afterImages: parseUrls(form.afterText),
+      beforeImages,
+      afterImages,
       isActive: true,
     };
     const r = await createProjectAction(payload);
     setLoading(false);
-    if (r.success) {
+    if (r.success && "id" in r && r.id) {
+      await saveProjectImages(
+        r.id,
+        projectGallery.map((img, i) => ({ url: img.url, order: i }))
+      );
       setIsCreating(false);
+      setProjectGallery([]);
+      refresh();
+    } else if (r.success) {
+      setIsCreating(false);
+      setProjectGallery([]);
       refresh();
     } else {
       setError(r.error ?? "Error");
@@ -127,13 +150,30 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
       area: p.area != null ? String(p.area) : "",
       duration: p.duration != null ? String(p.duration) : "",
       beforeText: p.beforeImages.join("\n"),
-      afterText: p.afterImages.join("\n"),
     });
+    setProjectGallery(
+      p.projectImages.length > 0
+        ? p.projectImages.map((img) => ({ url: img.url, order: img.order }))
+        : p.afterImages.map((url, i) => ({ url, order: i }))
+    );
   };
 
   const submitEdit = async () => {
     if (!editId) return;
     setLoading(true);
+    setError(null);
+    if (projectGallery.length < 1) {
+      setError("Subí al menos una imagen en la galería (después).");
+      setLoading(false);
+      return;
+    }
+    const beforeImages = parseUrls(form.beforeText);
+    if (beforeImages.length < 1) {
+      setError("Agregá al menos una URL en “antes”.");
+      setLoading(false);
+      return;
+    }
+    const afterImages = projectGallery.map((g) => g.url);
     const r = await updateProjectAction(editId, {
       title: form.title,
       slug: form.slug,
@@ -141,11 +181,15 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
       category: form.category as ProjectInput["category"],
       area: form.area ? Number(form.area) : undefined,
       duration: form.duration ? Number(form.duration) : undefined,
-      beforeImages: parseUrls(form.beforeText),
-      afterImages: parseUrls(form.afterText),
+      beforeImages,
+      afterImages,
     });
     setLoading(false);
     if (r.success) {
+      await saveProjectImages(
+        editId,
+        projectGallery.map((img, i) => ({ url: img.url, order: i }))
+      );
       setEditId(null);
       refresh();
     } else {
@@ -228,13 +272,11 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
         />
       </div>
       <div className="grid gap-2">
-        <Label>Imágenes después (URLs)</Label>
-        <Textarea
-          rows={2}
-          value={form.afterText}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, afterText: e.target.value }))
-          }
+        <Label>Galería (después)</Label>
+        <ImageUploader
+          endpoint="projectImages"
+          initialImages={projectGallery}
+          onChange={setProjectGallery}
         />
       </div>
     </>
@@ -246,7 +288,13 @@ export function ProjectsAdminClient({ initialProjects }: { initialProjects: Row[
         title="Proyectos"
         description="Portfolio de remodelaciones: antes/después, categoría y visibilidad en el sitio público."
         actions={
-          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+          <Dialog
+            open={isCreating}
+            onOpenChange={(open) => {
+              setIsCreating(open);
+              if (open) setProjectGallery([]);
+            }}
+          >
             <DialogTrigger asChild>
               <Button className="bg-[var(--headline)] text-white hover:bg-[var(--headline)]/90">
                 <Plus className="mr-2 h-4 w-4" />

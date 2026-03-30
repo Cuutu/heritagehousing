@@ -3,7 +3,7 @@ import { constructWebhookEvent } from "@/lib/services/stripe.service";
 import { markReservationPaidFromStripe } from "@/lib/services/reservation.service";
 import { getReservationById } from "@/lib/repositories/reservation.repository";
 import { prisma } from "@/lib/prisma";
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus, ReservationLifecycleStatus } from "@prisma/client";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -69,7 +69,10 @@ export async function POST(request: NextRequest) {
               id: reservationId,
               paymentStatus: PaymentStatus.PENDING,
             },
-            data: { paymentStatus: PaymentStatus.CANCELLED },
+            data: {
+              paymentStatus: PaymentStatus.CANCELLED,
+              lifecycleStatus: ReservationLifecycleStatus.CANCELLED,
+            },
           });
         } catch (err) {
           console.error(

@@ -22,6 +22,21 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum ReservationLifecycleStatus {
+  CONFIRMED
+  PENDING
+  CANCELLED
+  COMPLETED
+}
+
+enum CleaningStatus {
+  PENDING
+  NOTIFIED
+  CONFIRMED
+  IN_PROGRESS
+  DONE
+}
+
 model Property {
   id             String        @id @default(cuid())
   slug           String        @unique
@@ -47,35 +62,52 @@ model Property {
   updatedAt      DateTime      @updatedAt
   reservations   Reservation[]
   blockedDates   BlockedDate[]
+  propertyImages PropertyImage[] @relation("PropertyGallery")
+  cleaningStaff  CleaningStaff[] @relation("StaffProperties")
+  cleaningAssignments CleaningAssignment[]
 
   @@index([isActive])
   @@index([slug])
 }
 
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  property   Property @relation("PropertyGallery", fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+}
+
 model Reservation {
-  id            String              @id @default(cuid())
-  propertyId    String
-  property      Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  source        ReservationSource   @default(DIRECT)
-  checkIn       DateTime            @db.Date
-  checkOut      DateTime            @db.Date
-  guestName     String
-  guestEmail    String
-  guestPhone    String?
-  guestCount    Int                 @default(1)
-  totalPrice    Decimal             @db.Decimal(10, 2)
-  paymentStatus PaymentStatus       @default(PENDING)
-  stripeId      String?
-  externalId    String?
-  notes         String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id                String                     @id @default(cuid())
+  propertyId        String
+  property          Property                   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  source            ReservationSource          @default(DIRECT)
+  checkIn           DateTime                   @db.Date
+  checkOut          DateTime                   @db.Date
+  guestName         String
+  guestEmail        String
+  guestPhone        String?
+  guestCount        Int                        @default(1)
+  totalPrice        Decimal                    @db.Decimal(10, 2)
+  paymentStatus     PaymentStatus              @default(PENDING)
+  lifecycleStatus   ReservationLifecycleStatus @default(PENDING)
+  stripeId          String?
+  externalId        String?
+  notes             String?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  cleaningAssignments CleaningAssignment[]
 
   @@index([propertyId])
   @@index([propertyId, checkIn, checkOut])
   @@index([checkIn, checkOut])
   @@index([paymentStatus])
   @@index([source])
+  @@index([lifecycleStatus])
 }
 
 model BlockedDate {
@@ -104,9 +136,21 @@ model Project {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  projectImages ProjectImage[] @relation("ProjectGallery")
 
   @@index([isActive])
   @@index([category])
+}
+
+model ProjectImage {
+  id        String   @id @default(cuid())
+  projectId String
+  url       String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  project   Project  @relation("ProjectGallery", fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }
 
 model Lead {
@@ -134,7 +178,50 @@ model Post {
   tags        String[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  postImages  PostImage[] @relation("PostGallery")
 
   @@index([published, publishedAt])
   @@index([slug])
+}
+
+model PostImage {
+  id        String   @id @default(cuid())
+  postId    String
+  url       String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  post      Post     @relation("PostGallery", fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model CleaningStaff {
+  id          String               @id @default(cuid())
+  name        String
+  phone       String
+  active      Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  assignments CleaningAssignment[]
+  properties  Property[]           @relation("StaffProperties")
+}
+
+model CleaningAssignment {
+  id            String         @id @default(cuid())
+  reservationId String
+  staffId       String
+  propertyId    String
+  cleaningDate  DateTime
+  notifiedAt    DateTime?
+  status        CleaningStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime       @default(now())
+
+  reservation Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  staff       CleaningStaff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  property    Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([reservationId])
+  @@index([cleaningDate])
+  @@index([staffId])
+  @@index([propertyId])
 }

@@ -54,14 +54,14 @@ export async function createPropertyAction(raw: unknown) {
     const data = (await mergeCoordsFromGoogleLink(
       parsed
     )) as PropertyInput;
-    await repoCreate({
+    const created = await repoCreate({
       ...data,
       airbnbIcalUrl: data.airbnbIcalUrl || undefined,
       bookingIcalUrl: data.bookingIcalUrl || undefined,
     });
     revalidatePath("/admin/propiedades");
     revalidatePath("/alquileres");
-    return { success: true as const };
+    return { success: true as const, id: created.id };
   } catch (e) {
     if (e instanceof z.ZodError) {
       return { success: false as const, error: "Validación fallida", issues: e.errors };

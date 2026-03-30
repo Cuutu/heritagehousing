@@ -12,6 +12,7 @@ export default async function AdminBlogEditPage({
 }) {
   const post = await prisma.post.findUnique({
     where: { id: params.id },
+    include: { postImages: { orderBy: { order: "asc" } } },
   });
 
   if (!post) {
@@ -29,13 +30,20 @@ export default async function AdminBlogEditPage({
     tags: post.tags,
   };
 
+  const initialGallery =
+    post.postImages.length > 0
+      ? post.postImages.map((img) => ({ url: img.url, order: img.order }))
+      : post.coverImage
+        ? [{ url: post.coverImage, order: 0 }]
+        : [];
+
   return (
     <>
       <AdminPageHeader
         title="Editar artículo"
         description="Los cambios se guardan al hacer clic en Guardar. Publicá o despublicá desde el listado del blog."
       />
-      <PostEditor mode="edit" initial={initial} />
+      <PostEditor mode="edit" initial={initial} initialGallery={initialGallery} />
     </>
   );
 }

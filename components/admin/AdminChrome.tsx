@@ -1,5 +1,6 @@
 "use client";
 
+import "@uploadthing/react/styles.css";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,6 +13,7 @@ import {
   Menu,
   X,
   BookOpen,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,7 @@ const adminNav = [
   { name: "Propiedades", href: "/admin/propiedades", icon: Building2 },
   { name: "Proyectos", href: "/admin/proyectos", icon: Wrench },
   { name: "Blog", href: "/admin/blog", icon: BookOpen },
+  { name: "Limpieza", href: "/admin/limpieza", icon: Sparkles },
 ];
 
 export function AdminChrome({
