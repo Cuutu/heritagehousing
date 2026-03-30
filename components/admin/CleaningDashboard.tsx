@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Send,
   User,
+  Plus,
 } from "lucide-react";
 import type {
   CleaningAssignment,
@@ -19,7 +20,23 @@ import type {
   Reservation,
 } from "@prisma/client";
 import { CleaningStatus } from "@prisma/client";
-import { createAssignment, sendWhatsAppReminder } from "@/app/admin/actions/cleaning";
+import {
+  createAssignment,
+  createCleaningStaff,
+  sendWhatsAppReminder,
+  setCleaningStaffActive,
+} from "@/app/admin/actions/cleaning";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type StaffRow = CleaningStaff & { properties: Property[] };
 
@@ -77,6 +94,13 @@ export function CleaningDashboard({
 }: Props) {
   const router = useRouter();
   const [sending, setSending] = useState<string | null>(null);
+  const [staffDialogOpen, setStaffDialogOpen] = useState(false);
+  const [staffName, setStaffName] = useState("");
+  const [staffPhone, setStaffPhone] = useState("");
+  const [staffFormError, setStaffFormError] = useState<string | null>(null);
+  const [equipoError, setEquipoError] = useState<string | null>(null);
+  const [staffSubmitting, setStaffSubmitting] = useState(false);
+  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
 
   const handleSendReminder = async (assignmentId: string) => {
     setSending(assignmentId);
@@ -101,19 +125,81 @@ export function CleaningDashboard({
     router.refresh();
   };
 
+  const handleCreateStaff = async (e: FormEvent) => {
+    e.preventDefault();
+    setStaffFormError(null);
+    setStaffSubmitting(true);
+    try {
+      const res = await createCleaningStaff({
+        name: staffName,
+        phone: staffPhone,
+      });
+      if (!res.success) {
+        setStaffFormError(res.error);
+        return;
+      }
+      setStaffDialogOpen(false);
+      setStaffName("");
+      setStaffPhone("");
+      router.refresh();
+    } finally {
+      setStaffSubmitting(false);
+    }
+  };
+
+  const handleDeactivateStaff = async (id: string) => {
+    if (
+      !confirm(
+        "¿Dar de baja a esta persona? Dejará de aparecer en el equipo y no podrás asignarle nuevas limpiezas."
+      )
+    ) {
+      return;
+    }
+    setDeactivatingId(id);
+    try {
+      const res = await setCleaningStaffActive(id, false);
+      if (!res.success) {
+        setEquipoError(res.error);
+        return;
+      }
+      setEquipoError(null);
+      router.refresh();
+    } finally {
+      setDeactivatingId(null);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-semibold text-gray-900">
             <User size={16} /> Equipo
           </h2>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="shrink-0 gap-1"
+            onClick={() => {
+              setStaffFormError(null);
+              setEquipoError(null);
+              setStaffDialogOpen(true);
+            }}
+          >
+            <Plus size={14} /> Agregar
+          </Button>
         </div>
+        {equipoError ? (
+          <p className="mb-3 text-sm text-red-600" role="alert">
+            {equipoError}
+          </p>
+        ) : null}
         <div className="space-y-3">
           {staff.length === 0 ? (
             <p className="text-center text-sm text-gray-400">
-              No hay personal activo. Agregá registros en la base (Prisma) o
-              ampliá el admin más adelante.
+              No hay personal activo. Usá <strong>Agregar</strong> para dar de
+              alta nombre y WhatsApp.
             </p>
           ) : (
             staff.map((s) => (
@@ -132,12 +218,105 @@ export function CleaningDashboard({
                     <Phone size={10} /> {s.phone}
                   </p>
                 </div>
-                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <button
+                    type="button"
+                    disabled={deactivatingId === s.id}
+                    onClick={() => void handleDeactivateStaff(s.id)}
+                    className="text-[10px] font-medium text-gray-400 underline-offset-2 hover:text-red-600 hover:underline disabled:opacity-50"
+                  >
+                    {deactivatingId === s.id ? "…" : "Dar de baja"}
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
+        <details className="mt-4 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 text-xs text-gray-600">
+          <summary className="cursor-pointer font-medium text-gray-700">
+            Flujo autónomo (sin tocar código)
+          </summary>
+          <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-gray-600">
+            <li>
+              Alta: nombre y número de WhatsApp (Chile: 9 + 8 dígitos; se
+              guarda como 569… para Meta).
+            </li>
+            <li>
+              Asignación: en <strong>Sin asignar</strong>, elegí persona por
+              checkout.
+            </li>
+            <li>
+              Recordatorios: en <strong>Próximos 14 días</strong>, enviá
+              WhatsApp cuando el estado sea Pendiente (requiere variables de
+              entorno de Meta configuradas en el servidor).
+            </li>
+          </ol>
+        </details>
       </div>
+
+      <Dialog
+        open={staffDialogOpen}
+        onOpenChange={(open) => {
+          setStaffDialogOpen(open);
+          if (!open) setStaffFormError(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={handleCreateStaff}>
+            <DialogHeader>
+              <DialogTitle>Agregar personal de limpieza</DialogTitle>
+              <DialogDescription>
+                El número se usa para WhatsApp. Formato Chile:{" "}
+                <code className="rounded bg-muted px-1">912345678</code> o{" "}
+                <code className="rounded bg-muted px-1">56912345678</code>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="grid gap-2">
+                <Label htmlFor="cleaning-staff-name">Nombre</Label>
+                <Input
+                  id="cleaning-staff-name"
+                  value={staffName}
+                  onChange={(e) => setStaffName(e.target.value)}
+                  placeholder="Ej. María González"
+                  autoComplete="name"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="cleaning-staff-phone">WhatsApp</Label>
+                <Input
+                  id="cleaning-staff-phone"
+                  type="tel"
+                  value={staffPhone}
+                  onChange={(e) => setStaffPhone(e.target.value)}
+                  placeholder="+56 9 1234 5678"
+                  autoComplete="tel"
+                  required
+                />
+              </div>
+              {staffFormError ? (
+                <p className="text-sm text-red-600" role="alert">
+                  {staffFormError}
+                </p>
+              ) : null}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStaffDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={staffSubmitting}>
+                {staffSubmitting ? "Guardando…" : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="rounded-xl border border-gray-200 bg-white p-5">
         <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900">
