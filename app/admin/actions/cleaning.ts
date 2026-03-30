@@ -5,8 +5,35 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sendWhatsAppReminder as sendWhatsAppReminderSvc } from "@/lib/cleaning/cleaning-notifications";
 
-export async function sendWhatsAppReminder(assignmentId: string) {
-  return sendWhatsAppReminderSvc(assignmentId);
+export type SendWhatsAppReminderActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function sendWhatsAppReminder(
+  assignmentId: string,
+  customMessage?: string | null
+): Promise<SendWhatsAppReminderActionResult> {
+  const trimmed = customMessage?.trim() ?? "";
+  if (trimmed.length > 4096) {
+    return { ok: false, error: "El mensaje no puede superar 4096 caracteres." };
+  }
+  try {
+    const success = await sendWhatsAppReminderSvc(
+      assignmentId,
+      trimmed ? { customMessage: trimmed } : undefined
+    );
+    if (!success) {
+      return {
+        ok: false,
+        error:
+          "Meta no aceptó el envío. Revisá META_PHONE_NUMBER_ID, META_ACCESS_TOKEN y el número en formato 569…",
+      };
+    }
+    return { ok: true };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Error al enviar";
+    return { ok: false, error: msg };
+  }
 }
 
 const assignmentCreateSchema = z.object({

@@ -61,7 +61,17 @@ Recordatorio de limpieza *Heritage Housing*:
 Por favor confirmá respondiendo *SÍ* ✅`;
 }
 
-export async function sendWhatsAppReminder(assignmentId: string) {
+const MAX_WHATSAPP_TEXT = 4096;
+
+export type SendWhatsAppReminderOptions = {
+  /** Si viene con texto, se envía tal cual (pruebas) y no se actualiza la asignación. */
+  customMessage?: string;
+};
+
+export async function sendWhatsAppReminder(
+  assignmentId: string,
+  options?: SendWhatsAppReminderOptions
+) {
   const id = z.string().cuid().parse(assignmentId);
 
   const assignment = await prisma.cleaningAssignment.findUnique({
@@ -74,21 +84,29 @@ export async function sendWhatsAppReminder(assignmentId: string) {
 
   if (!assignment) throw new Error("Assignment not found");
 
-  const daysUntil = Math.ceil(
-    (assignment.cleaningDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  );
+  const custom = options?.customMessage?.trim();
+  const useCustom = Boolean(custom && custom.length > 0);
 
-  const message = buildCleaningMessage({
-    staffName: assignment.staff.name,
-    propertyName: assignment.property.name,
-    propertyAddress: assignment.property.location,
-    cleaningDate: assignment.cleaningDate,
-    daysUntil,
-  });
+  if (custom && custom.length > MAX_WHATSAPP_TEXT) {
+    throw new Error(`El mensaje supera ${MAX_WHATSAPP_TEXT} caracteres`);
+  }
+
+  const message = useCustom && custom
+    ? custom
+    : buildCleaningMessage({
+        staffName: assignment.staff.name,
+        propertyName: assignment.property.name,
+        propertyAddress: assignment.property.location,
+        cleaningDate: assignment.cleaningDate,
+        daysUntil: Math.ceil(
+          (assignment.cleaningDate.getTime() - Date.now()) /
+            (1000 * 60 * 60 * 24)
+        ),
+      });
 
   const success = await sendWhatsApp(assignment.staff.phone, message);
 
-  if (success) {
+  if (success && !useCustom) {
     await prisma.cleaningAssignment.update({
       where: { id },
       data: { notifiedAt: new Date(), status: CleaningStatus.NOTIFIED },

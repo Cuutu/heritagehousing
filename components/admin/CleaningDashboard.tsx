@@ -37,6 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type StaffRow = CleaningStaff & { properties: Property[] };
 
@@ -101,11 +102,23 @@ export function CleaningDashboard({
   const [equipoError, setEquipoError] = useState<string | null>(null);
   const [staffSubmitting, setStaffSubmitting] = useState(false);
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  const [customWhatsAppMessage, setCustomWhatsAppMessage] = useState("");
+  const [sendWhatsAppError, setSendWhatsAppError] = useState<string | null>(
+    null
+  );
 
   const handleSendReminder = async (assignmentId: string) => {
     setSending(assignmentId);
+    setSendWhatsAppError(null);
     try {
-      await sendWhatsAppReminder(assignmentId);
+      const res = await sendWhatsAppReminder(
+        assignmentId,
+        customWhatsAppMessage || null
+      );
+      if (!res.ok) {
+        setSendWhatsAppError(res.error);
+        return;
+      }
       router.refresh();
     } finally {
       setSending(null);
@@ -169,8 +182,48 @@ export function CleaningDashboard({
     }
   };
 
+  const hasCustomWhatsApp = customWhatsAppMessage.trim().length > 0;
+
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div className="space-y-6">
+      <div className="rounded-xl border border-dashed border-gray-200 bg-white p-5">
+        <Label
+          htmlFor="whatsapp-custom-message"
+          className="text-base font-semibold text-gray-900"
+        >
+          Mensaje personalizado (pruebas WhatsApp)
+        </Label>
+        <p className="mt-1 text-sm text-gray-500">
+          Escribí un texto de prueba y usá <strong>Enviar prueba</strong> en
+          una asignación. Se envía al número del staff de esa fila; no cambia
+          el estado de la asignación. Dejá vacío para usar la plantilla oficial
+          al enviar recordatorios normales.
+        </p>
+        <Textarea
+          id="whatsapp-custom-message"
+          value={customWhatsAppMessage}
+          onChange={(e) => {
+            setCustomWhatsAppMessage(e.target.value);
+            setSendWhatsAppError(null);
+          }}
+          placeholder="Ej. Prueba Heritage: si leés esto, la API de Meta funciona ✅"
+          className="mt-3 min-h-[100px] text-sm"
+          maxLength={4096}
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          {customWhatsAppMessage.length}/4096
+          {hasCustomWhatsApp
+            ? " · Modo prueba: no se marca como «Notificado»."
+            : null}
+        </p>
+        {sendWhatsAppError ? (
+          <p className="mt-2 text-sm text-red-600" role="alert">
+            {sendWhatsAppError}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="rounded-xl border border-gray-200 bg-white p-5">
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-semibold text-gray-900">
@@ -250,6 +303,10 @@ export function CleaningDashboard({
               Recordatorios: en <strong>Próximos 14 días</strong>, enviá
               WhatsApp cuando el estado sea Pendiente (requiere variables de
               entorno de Meta configuradas en el servidor).
+            </li>
+            <li>
+              Pruebas: completá <strong>Mensaje personalizado</strong> arriba y
+              enviá desde una fila; no se actualiza el estado (solo prueba).
             </li>
           </ol>
         </details>
@@ -401,18 +458,26 @@ export function CleaningDashboard({
                       <Icon size={10} /> {cfg.label}
                     </span>
                   </div>
-                  {a.status === CleaningStatus.PENDING && (
+                  {(a.status === CleaningStatus.PENDING ||
+                    hasCustomWhatsApp) && (
                     <button
                       type="button"
                       onClick={() => void handleSendReminder(a.id)}
                       disabled={sending === a.id}
-                      className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      className={
+                        hasCustomWhatsApp
+                          ? "flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition-colors hover:bg-emerald-100 disabled:opacity-50"
+                          : "flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      }
                     >
                       {sending === a.id ? (
                         "Enviando..."
                       ) : (
                         <>
-                          <Send size={12} /> Enviar WhatsApp
+                          <Send size={12} />{" "}
+                          {hasCustomWhatsApp
+                            ? "Enviar prueba WhatsApp"
+                            : "Enviar WhatsApp"}
                         </>
                       )}
                     </button>
@@ -423,6 +488,7 @@ export function CleaningDashboard({
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
