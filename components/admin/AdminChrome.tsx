@@ -1,6 +1,5 @@
 "use client";
 
-import "@uploadthing/react/styles.css";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -85,7 +84,7 @@ export function AdminChrome({
       </header>
 
       <div className="flex min-h-[calc(100dvh-3.5rem)]">
-        <aside className="hidden w-60 shrink-0 flex-col border-r border-white/[0.08] bg-[var(--headline)] text-white md:flex lg:w-64">
+        <aside className="flex max-md:hidden w-60 shrink-0 flex-col border-r border-white/[0.08] bg-[var(--headline)] text-white lg:w-64">
           <div className="border-b border-white/[0.08] px-4 py-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--brand-accent)]">
               Navegación
