@@ -4,7 +4,9 @@ import {
   DM_Sans,
   DM_Mono,
 } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { AppProviders } from "@/components/providers/AppProviders";
+import { clerkConfigured } from "@/lib/clerk-config";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -54,7 +56,13 @@ export default function RootLayout({
       <body
         className={`${dmSans.className} min-h-screen bg-background font-sans antialiased`}
       >
-        <AppProviders>{children}</AppProviders>
+        {clerkConfigured() ? (
+          <ClerkProvider>
+            <AppProviders>{children}</AppProviders>
+          </ClerkProvider>
+        ) : (
+          <AppProviders>{children}</AppProviders>
+        )}
       </body>
     </html>
   );

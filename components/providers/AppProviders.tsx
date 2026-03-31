@@ -1,17 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { clerkConfigured } from "@/lib/clerk-config";
+import type { ReactNode } from "react";
 
-const ClerkProviderWrapper = dynamic(
-  () =>
-    import("./ClerkProviderWrapper").then((m) => m.ClerkProviderWrapper),
-  { ssr: false }
-);
-
-export function AppProviders({ children }: { children: React.ReactNode }) {
-  if (!clerkConfigured()) {
-    return <>{children}</>;
-  }
-  return <ClerkProviderWrapper>{children}</ClerkProviderWrapper>;
+/** Proveedores cliente (sin Clerk aquí: va en `app/layout.tsx` cuando hay claves). */
+export function AppProviders({ children }: { children: ReactNode }) {
+  return <>{children}</>;
 }
