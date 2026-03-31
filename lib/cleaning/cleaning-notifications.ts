@@ -5,12 +5,30 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { z } from "zod";
 
-async function sendWhatsApp(phone: string, message: string): Promise<boolean> {
-  const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
-  const accessToken = process.env.META_ACCESS_TOKEN;
+export type MetaSendResult = { ok: true } | { ok: false; error: string };
+
+function parseMetaGraphError(body: unknown, status: number, rawText: string): string {
+  if (body && typeof body === "object" && "error" in body) {
+    const e = (body as { error?: { message?: string; code?: number; error_subcode?: number } })
+      .error;
+    if (e?.message) {
+      const parts = [e.code != null ? `#${e.code}` : null, e.message].filter(Boolean);
+      return parts.join(" ");
+    }
+  }
+  const short = rawText.length > 280 ? `${rawText.slice(0, 280)}…` : rawText;
+  return `HTTP ${status}${short ? `: ${short}` : ""}`;
+}
+
+async function sendWhatsApp(phone: string, message: string): Promise<MetaSendResult> {
+  const phoneNumberId = process.env.META_PHONE_NUMBER_ID?.trim();
+  const accessToken = process.env.META_ACCESS_TOKEN?.trim();
   if (!phoneNumberId || !accessToken) {
-    console.warn("Meta WhatsApp: faltan META_PHONE_NUMBER_ID o META_ACCESS_TOKEN");
-    return false;
+    return {
+      ok: false,
+      error:
+        "Faltan META_PHONE_NUMBER_ID o META_ACCESS_TOKEN en el servidor (revisá Vercel → Environment Variables y redeploy).",
+    };
   }
 
   const res = await fetch(
@@ -30,7 +48,22 @@ async function sendWhatsApp(phone: string, message: string): Promise<boolean> {
     }
   );
 
-  return res.ok;
+  const rawText = await res.text();
+  let parsed: unknown;
+  try {
+    parsed = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    parsed = { _raw: rawText };
+  }
+
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: parseMetaGraphError(parsed, res.status, rawText),
+    };
+  }
+
+  return { ok: true };
 }
 
 function buildCleaningMessage(params: {
@@ -71,7 +104,7 @@ export type SendWhatsAppReminderOptions = {
 export async function sendWhatsAppReminder(
   assignmentId: string,
   options?: SendWhatsAppReminderOptions
-) {
+): Promise<MetaSendResult> {
   const id = z.string().cuid().parse(assignmentId);
 
   const assignment = await prisma.cleaningAssignment.findUnique({
@@ -82,13 +115,18 @@ export async function sendWhatsAppReminder(
     },
   });
 
-  if (!assignment) throw new Error("Assignment not found");
+  if (!assignment) {
+    return { ok: false, error: "Asignación no encontrada." };
+  }
 
   const custom = options?.customMessage?.trim();
   const useCustom = Boolean(custom && custom.length > 0);
 
   if (custom && custom.length > MAX_WHATSAPP_TEXT) {
-    throw new Error(`El mensaje supera ${MAX_WHATSAPP_TEXT} caracteres`);
+    return {
+      ok: false,
+      error: `El mensaje supera ${MAX_WHATSAPP_TEXT} caracteres`,
+    };
   }
 
   const message = useCustom && custom
@@ -104,9 +142,14 @@ export async function sendWhatsAppReminder(
         ),
       });
 
-  const success = await sendWhatsApp(assignment.staff.phone, message);
+  const result = await sendWhatsApp(assignment.staff.phone, message);
 
-  if (success && !useCustom) {
+  if (!result.ok) {
+    revalidatePath("/admin/limpieza");
+    return result;
+  }
+
+  if (!useCustom) {
     await prisma.cleaningAssignment.update({
       where: { id },
       data: { notifiedAt: new Date(), status: CleaningStatus.NOTIFIED },
@@ -114,7 +157,7 @@ export async function sendWhatsAppReminder(
   }
 
   revalidatePath("/admin/limpieza");
-  return success;
+  return { ok: true };
 }
 
 /**
@@ -123,26 +166,29 @@ export async function sendWhatsAppReminder(
 export async function sendWhatsAppTestToStaff(
   staffId: string,
   message: string
-): Promise<boolean> {
+): Promise<MetaSendResult> {
   const id = z.string().cuid().parse(staffId);
   const trimmed = message.trim();
   if (!trimmed.length) {
-    throw new Error("El mensaje está vacío");
+    return { ok: false, error: "El mensaje está vacío" };
   }
   if (trimmed.length > MAX_WHATSAPP_TEXT) {
-    throw new Error(`El mensaje supera ${MAX_WHATSAPP_TEXT} caracteres`);
+    return {
+      ok: false,
+      error: `El mensaje supera ${MAX_WHATSAPP_TEXT} caracteres`,
+    };
   }
 
   const staff = await prisma.cleaningStaff.findUnique({
     where: { id },
   });
   if (!staff?.active) {
-    throw new Error("Personal no encontrado o inactivo");
+    return { ok: false, error: "Personal no encontrado o inactivo" };
   }
 
-  const success = await sendWhatsApp(staff.phone, trimmed);
+  const result = await sendWhatsApp(staff.phone, trimmed);
   revalidatePath("/admin/limpieza");
-  return success;
+  return result;
 }
 
 export async function runCleaningCronJob() {
@@ -164,5 +210,8 @@ export async function runCleaningCronJob() {
     assignments.map((a) => sendWhatsAppReminder(a.id))
   );
 
-  return { sent: results.filter(Boolean).length, total: assignments.length };
+  return {
+    sent: results.filter((r) => r.ok).length,
+    total: assignments.length,
+  };
 }

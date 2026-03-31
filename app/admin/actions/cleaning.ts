@@ -25,16 +25,12 @@ export async function sendWhatsAppReminder(
     return { ok: false, error: "El mensaje no puede superar 4096 caracteres." };
   }
   try {
-    const success = await sendWhatsAppReminderSvc(
+    const result = await sendWhatsAppReminderSvc(
       assignmentId,
       trimmed ? { customMessage: trimmed } : undefined
     );
-    if (!success) {
-      return {
-        ok: false,
-        error:
-          "Meta no aceptó el envío. Revisá META_PHONE_NUMBER_ID, META_ACCESS_TOKEN y el número (Chile 569… o Argentina 549…).",
-      };
+    if (!result.ok) {
+      return { ok: false, error: result.error };
     }
     return { ok: true };
   } catch (e) {
@@ -55,13 +51,9 @@ export async function sendWhatsAppTestToStaff(
     return { ok: false, error: "El mensaje no puede superar 4096 caracteres." };
   }
   try {
-    const success = await sendWhatsAppTestToStaffSvc(staffId, trimmed);
-    if (!success) {
-      return {
-        ok: false,
-        error:
-          "Meta no aceptó el envío. Revisá META_PHONE_NUMBER_ID, META_ACCESS_TOKEN y el número (Chile 569… o Argentina 549…).",
-      };
+    const result = await sendWhatsAppTestToStaffSvc(staffId, trimmed);
+    if (!result.ok) {
+      return { ok: false, error: result.error };
     }
     return { ok: true };
   } catch (e) {
