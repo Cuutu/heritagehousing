@@ -3,7 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { sendWhatsAppReminder as sendWhatsAppReminderSvc } from "@/lib/cleaning/cleaning-notifications";
+import {
+  sendWhatsAppReminder as sendWhatsAppReminderSvc,
+  sendWhatsAppTestToStaff as sendWhatsAppTestToStaffSvc,
+} from "@/lib/cleaning/cleaning-notifications";
 import {
   normalizeWhatsAppPhone,
   whatsappPhoneHint,
@@ -26,6 +29,33 @@ export async function sendWhatsAppReminder(
       assignmentId,
       trimmed ? { customMessage: trimmed } : undefined
     );
+    if (!success) {
+      return {
+        ok: false,
+        error:
+          "Meta no aceptó el envío. Revisá META_PHONE_NUMBER_ID, META_ACCESS_TOKEN y el número (Chile 569… o Argentina 549…).",
+      };
+    }
+    return { ok: true };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Error al enviar";
+    return { ok: false, error: msg };
+  }
+}
+
+export async function sendWhatsAppTestToStaff(
+  staffId: string,
+  message: string | null
+): Promise<SendWhatsAppReminderActionResult> {
+  const trimmed = message?.trim() ?? "";
+  if (!trimmed.length) {
+    return { ok: false, error: "Escribí un mensaje de prueba arriba." };
+  }
+  if (trimmed.length > 4096) {
+    return { ok: false, error: "El mensaje no puede superar 4096 caracteres." };
+  }
+  try {
+    const success = await sendWhatsAppTestToStaffSvc(staffId, trimmed);
     if (!success) {
       return {
         ok: false,

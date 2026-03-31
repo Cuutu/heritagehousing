@@ -117,6 +117,34 @@ export async function sendWhatsAppReminder(
   return success;
 }
 
+/**
+ * Prueba de WhatsApp sin asignación (mismo canal Meta que los recordatorios).
+ */
+export async function sendWhatsAppTestToStaff(
+  staffId: string,
+  message: string
+): Promise<boolean> {
+  const id = z.string().cuid().parse(staffId);
+  const trimmed = message.trim();
+  if (!trimmed.length) {
+    throw new Error("El mensaje está vacío");
+  }
+  if (trimmed.length > MAX_WHATSAPP_TEXT) {
+    throw new Error(`El mensaje supera ${MAX_WHATSAPP_TEXT} caracteres`);
+  }
+
+  const staff = await prisma.cleaningStaff.findUnique({
+    where: { id },
+  });
+  if (!staff?.active) {
+    throw new Error("Personal no encontrado o inactivo");
+  }
+
+  const success = await sendWhatsApp(staff.phone, trimmed);
+  revalidatePath("/admin/limpieza");
+  return success;
+}
+
 export async function runCleaningCronJob() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);

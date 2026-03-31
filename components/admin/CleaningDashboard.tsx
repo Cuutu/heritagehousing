@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -24,6 +24,7 @@ import {
   createAssignment,
   createCleaningStaff,
   sendWhatsAppReminder,
+  sendWhatsAppTestToStaff,
   setCleaningStaffActive,
 } from "@/app/admin/actions/cleaning";
 import {
@@ -106,6 +107,33 @@ export function CleaningDashboard({
   const [sendWhatsAppError, setSendWhatsAppError] = useState<string | null>(
     null
   );
+  const [directTestStaffId, setDirectTestStaffId] = useState("");
+  const [sendingDirectTest, setSendingDirectTest] = useState(false);
+
+  useEffect(() => {
+    if (staff.length > 0 && !directTestStaffId) {
+      setDirectTestStaffId(staff[0].id);
+    }
+  }, [staff, directTestStaffId]);
+
+  const handleSendDirectTest = async () => {
+    if (!directTestStaffId || !customWhatsAppMessage.trim()) return;
+    setSendingDirectTest(true);
+    setSendWhatsAppError(null);
+    try {
+      const res = await sendWhatsAppTestToStaff(
+        directTestStaffId,
+        customWhatsAppMessage
+      );
+      if (!res.ok) {
+        setSendWhatsAppError(res.error);
+        return;
+      }
+      router.refresh();
+    } finally {
+      setSendingDirectTest(false);
+    }
+  };
 
   const handleSendReminder = async (assignmentId: string) => {
     setSending(assignmentId);
@@ -194,10 +222,11 @@ export function CleaningDashboard({
           Mensaje personalizado (pruebas WhatsApp)
         </Label>
         <p className="mt-1 text-sm text-gray-500">
-          Escribí un texto de prueba y usá <strong>Enviar prueba</strong> en
-          una asignación. Se envía al número del staff de esa fila; no cambia
-          el estado de la asignación. Dejá vacío para usar la plantilla oficial
-          al enviar recordatorios normales.
+          Escribí un texto y enviálo con el botón de abajo (sin necesidad de
+          asignaciones en «Próximos 14 días») o con <strong>Enviar prueba</strong>{" "}
+          en una fila de asignación cuando exista. No cambia estados en la base.
+          Dejá vacío para usar la plantilla oficial al enviar recordatorios
+          normales desde cada fila.
         </p>
         <Textarea
           id="whatsapp-custom-message"
@@ -220,6 +249,47 @@ export function CleaningDashboard({
           <p className="mt-2 text-sm text-red-600" role="alert">
             {sendWhatsAppError}
           </p>
+        ) : null}
+
+        {hasCustomWhatsApp ? (
+          <div className="mt-4 flex flex-col gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 sm:flex-row sm:items-end">
+            <div className="min-w-0 flex-1">
+              <Label htmlFor="direct-test-staff" className="text-xs text-gray-700">
+                Enviar prueba a (equipo)
+              </Label>
+              {staff.length === 0 ? (
+                <p className="mt-1 text-sm text-amber-800">
+                  Agregá personal en «Equipo» para poder probar el envío.
+                </p>
+              ) : (
+                <select
+                  id="direct-test-staff"
+                  value={directTestStaffId}
+                  onChange={(e) => setDirectTestStaffId(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm"
+                >
+                  {staff.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} — {s.phone}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <Button
+              type="button"
+              disabled={
+                staff.length === 0 ||
+                !directTestStaffId ||
+                sendingDirectTest
+              }
+              onClick={() => void handleSendDirectTest()}
+              className="shrink-0 border border-emerald-600 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
+              variant="outline"
+            >
+              {sendingDirectTest ? "Enviando…" : "Enviar prueba a este número"}
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -305,8 +375,8 @@ export function CleaningDashboard({
               entorno de Meta configuradas en el servidor).
             </li>
             <li>
-              Pruebas: completá <strong>Mensaje personalizado</strong> arriba y
-              enviá desde una fila; no se actualiza el estado (solo prueba).
+              Pruebas: texto arriba y <strong>Enviar prueba a este número</strong>{" "}
+              (equipo) o desde una fila en «Próximos 14 días» si hay asignación.
             </li>
           </ol>
         </details>
